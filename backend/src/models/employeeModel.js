@@ -33,6 +33,7 @@ async function createEmployeesTable() {
     console.log('✅ Table employees créée/vérifiée');
   } catch (err) {
     console.error('❌ Erreur création table employees:', err);
+    // Ne pas faire planter l'application
   }
 }
 
@@ -58,8 +59,13 @@ async function addEmployee(employee) {
 
 // Récupérer tous les employés
 async function getEmployees() {
-  const result = await pool.query('SELECT * FROM employees ORDER BY nom');
-  return result.rows;
+  try {
+    const result = await pool.query('SELECT * FROM employees ORDER BY nom');
+    return result.rows;
+  } catch (err) {
+    console.error('❌ Erreur récupération employés:', err);
+    return []; // Retourner un tableau vide en cas d'erreur
+  }
 }
 
 // Récupérer un employé par ID
