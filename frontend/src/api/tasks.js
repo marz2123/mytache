@@ -1,5 +1,5 @@
 // Remplacer les URLs locales par l'URL de production
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://mytache-production.up.railway.app';
 
 // Fonction helper pour obtenir les headers avec l'utilisateur connecté
 const getHeaders = () => {

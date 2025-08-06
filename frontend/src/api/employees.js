@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api/employees";
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://mytache-production.up.railway.app';
 
 // Fonction helper pour obtenir les headers avec l'utilisateur connecté
 const getHeaders = () => {
@@ -11,7 +11,7 @@ const getHeaders = () => {
 
 // Récupérer tous les employés
 export async function getEmployees() {
-  const response = await fetch(API_URL, {
+  const response = await fetch(API_BASE_URL, {
     headers: getHeaders()
   });
   if (!response.ok) throw new Error("Erreur lors de la récupération des employés");
@@ -20,7 +20,7 @@ export async function getEmployees() {
 
 // Récupérer un employé par ID
 export async function getEmployeeById(id) {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     headers: getHeaders()
   });
   if (!response.ok) throw new Error("Employé non trouvé");
@@ -29,7 +29,7 @@ export async function getEmployeeById(id) {
 
 // Ajouter un employé
 export async function addEmployee(employee) {
-  const response = await fetch(API_URL, {
+  const response = await fetch(API_BASE_URL, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(employee),
@@ -40,7 +40,7 @@ export async function addEmployee(employee) {
 
 // Mettre à jour un employé
 export async function updateEmployee(id, employee) {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(employee),
@@ -51,7 +51,7 @@ export async function updateEmployee(id, employee) {
 
 // Supprimer un employé
 export async function deleteEmployee(id) {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
     headers: getHeaders()
   });
