@@ -1,0 +1,60 @@
+const API_URL = "http://localhost:5000/api/employees";
+
+// Fonction helper pour obtenir les headers avec l'utilisateur connecté
+const getHeaders = () => {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  return {
+    "Content-Type": "application/json",
+    ...(currentUser && { "x-current-user": JSON.stringify(currentUser) })
+  };
+};
+
+// Récupérer tous les employés
+export async function getEmployees() {
+  const response = await fetch(API_URL, {
+    headers: getHeaders()
+  });
+  if (!response.ok) throw new Error("Erreur lors de la récupération des employés");
+  return response.json();
+}
+
+// Récupérer un employé par ID
+export async function getEmployeeById(id) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    headers: getHeaders()
+  });
+  if (!response.ok) throw new Error("Employé non trouvé");
+  return response.json();
+}
+
+// Ajouter un employé
+export async function addEmployee(employee) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(employee),
+  });
+  if (!response.ok) throw new Error("Erreur lors de l'ajout de l'employé");
+  return response.json();
+}
+
+// Mettre à jour un employé
+export async function updateEmployee(id, employee) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(employee),
+  });
+  if (!response.ok) throw new Error("Erreur lors de la mise à jour de l'employé");
+  return response.json();
+}
+
+// Supprimer un employé
+export async function deleteEmployee(id) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: "DELETE",
+    headers: getHeaders()
+  });
+  if (!response.ok) throw new Error("Erreur lors de la suppression de l'employé");
+  return response.json();
+} 

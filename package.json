@@ -1,0 +1,32 @@
+{
+  "name": "mytache",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node backend/src/app.js",
+    "dev": "nodemon backend/src/app.js",
+    "frontend": "cd frontend && npm start",
+    "frontend:install": "cd frontend && npm install",
+    "backend:install": "npm install",
+    "install:all": "npm install && cd frontend && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.5",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
+  }
+}
