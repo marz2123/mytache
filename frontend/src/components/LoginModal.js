@@ -14,17 +14,18 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
   useEffect(() => {
     const loadEmployees = async () => {
       try {
+        console.log('🔍 Chargement des employés...');
         const data = await getEmployees();
+        console.log('✅ Employés chargés:', data);
         setEmployees(data.filter(emp => emp.actif));
       } catch (err) {
-        console.error('Erreur lors du chargement des utilisateurs:', err);
+        console.error('❌ Erreur lors du chargement des utilisateurs:', err);
       }
     };
     
-    if (isOpen) {
-      loadEmployees();
-    }
-  }, [isOpen]);
+    // Charger les employés au démarrage, pas seulement quand la modal s'ouvre
+    loadEmployees();
+  }, []); // Dépendance vide pour charger une seule fois
 
   // Gérer la connexion
   const handleLogin = async (e) => {
