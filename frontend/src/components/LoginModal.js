@@ -41,7 +41,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
 
     try {
       const response = await login({
-        email: selectedEmployee.email,
+        email: selectedEmployee.email, // Utiliser l'email au lieu du nom
         password: password
       });
       

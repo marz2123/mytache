@@ -1,26 +1,31 @@
-const { getEmployeeByEmail } = require('../models/employeeModel');
+const { getEmployeeByEmail, getEmployeeByName } = require('../models/employeeModel');
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, nom } = req.body;
     
-    console.log('🔍 Tentative de connexion pour:', email);
+    console.log('🔍 Tentative de connexion pour:', email || nom);
     
-    // Récupérer l'employé par email
-    const employee = await getEmployeeByEmail(email);
+    // Essayer d'abord par email, puis par nom
+    let employee = null;
+    if (email) {
+      employee = await getEmployeeByEmail(email);
+    } else if (nom) {
+      employee = await getEmployeeByName(nom);
+    }
     
     if (!employee) {
-      console.log('❌ Utilisateur non trouvé:', email);
+      console.log('❌ Utilisateur non trouvé:', email || nom);
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
     
     // Vérifier le mot de passe
     if (employee.password !== password) {
-      console.log('❌ Mot de passe incorrect pour:', email);
+      console.log('❌ Mot de passe incorrect pour:', email || nom);
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
     
-    console.log('✅ Connexion réussie pour:', email);
+    console.log('✅ Connexion réussie pour:', employee.nom);
     res.json({
       success: true,
       user: {
