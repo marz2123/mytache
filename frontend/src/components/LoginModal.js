@@ -17,7 +17,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
         console.log('🔍 Chargement des employés...');
         const data = await getEmployees();
         console.log('✅ Employés chargés:', data);
-        setEmployees(data.filter(emp => emp.actif));
+        setEmployees(data); // Supprimer le filtre actif
       } catch (err) {
         console.error('❌ Erreur lors du chargement des utilisateurs:', err);
       }

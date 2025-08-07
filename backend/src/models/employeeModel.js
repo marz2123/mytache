@@ -3,18 +3,37 @@ const { Client } = require('pg');
 // Debug pour voir les variables d'environnement
 console.log('🔍 DATABASE_URL:', process.env.DATABASE_URL ? 'PRESENT' : 'MISSING');
 
-// Utiliser Client au lieu de Pool pour éviter les problèmes SASL
+// Configuration plus robuste pour éviter les déconnexions
 let client = null;
 
 async function getClient() {
-  if (!client) {
+  if (!client || client.connection && client.connection.stream && client.connection.stream.destroyed) {
+    if (client) {
+      try {
+        await client.end();
+      } catch (err) {
+        console.log('Client déjà fermé');
+      }
+    }
+    
     client = new Client({
       connectionString: process.env.DATABASE_URL,
       ssl: {
         rejectUnauthorized: false
-      }
+      },
+      // Options pour éviter les déconnexions
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+      max: 1
     });
-    await client.connect();
+    
+    try {
+      await client.connect();
+      console.log('✅ Connexion à la base de données établie');
+    } catch (err) {
+      console.error('❌ Erreur de connexion:', err);
+      throw err;
+    }
   }
   return client;
 }
