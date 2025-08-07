@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://mytache-production.up.railway.app';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Fonction helper pour obtenir les headers avec l'utilisateur connecté
 const getHeaders = () => {
@@ -10,13 +10,10 @@ const getHeaders = () => {
 };
 
 // Récupérer tous les employés
-export async function getEmployees() {
-  const response = await fetch(API_BASE_URL, {
-    headers: getHeaders()
-  });
-  if (!response.ok) throw new Error("Erreur lors de la récupération des employés");
+export const getEmployees = async () => {
+  const response = await fetch(`${API_BASE_URL}/api/employees`);
   return response.json();
-}
+};
 
 // Récupérer un employé par ID
 export async function getEmployeeById(id) {
