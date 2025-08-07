@@ -33,7 +33,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     e.preventDefault();
     
     if (!selectedEmployee || !password) {
-      setError('Veuillez sélectionner un utilisateur et saisir le mot de passe');
+      setError('Veuillez saisir votre email et mot de passe');
       return;
     }
 
@@ -41,24 +41,22 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     setError('');
 
     try {
-      console.log('🔍 Tentative de connexion pour:', selectedEmployee); // Utiliser selectedEmployee au lieu de email
+      console.log('🔍 Tentative de connexion pour:', selectedEmployee);
       console.log('📧 Email envoyé:', selectedEmployee);
       console.log(' Mot de passe envoyé:', password);
       
       const response = await login({
-        nom: selectedEmployee, // Utiliser selectedEmployee au lieu de email
+        email: selectedEmployee, // ✅ Envoyer email au lieu de nom
         password: password
       });
       
       console.log('✅ Réponse de connexion:', response);
       
       if (response.success) {
-        // Connexion réussie
         localStorage.setItem('currentUser', JSON.stringify(response.user));
         onLogin(response.user);
         onClose();
       } else {
-        // Erreur de connexion
         setError(response.error || 'Erreur de connexion');
       }
       
