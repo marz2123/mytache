@@ -22,8 +22,8 @@ async function getClient() {
         rejectUnauthorized: false
       },
       // Options pour éviter les déconnexions
-      connectionTimeoutMillis: 10000,
-      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 30000, // Augmenter à 30s
+      idleTimeoutMillis: 60000, // Augmenter à 60s
       max: 1
     });
     
@@ -36,6 +36,38 @@ async function getClient() {
     }
   }
   return client;
+}
+
+// Ajouter une fonction pour gérer les erreurs de connexion
+async function executeQuery(query, params = []) {
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const dbClient = await getClient();
+      const result = await dbClient.query(query, params);
+      return result;
+    } catch (err) {
+      console.error(`❌ Erreur requête (tentative ${4-retries}/3):`, err);
+      retries--;
+      
+      if (retries === 0) {
+        throw err;
+      }
+      
+      // Attendre avant de réessayer
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Forcer une nouvelle connexion
+      if (client) {
+        try {
+          await client.end();
+        } catch (e) {
+          console.log('Client déjà fermé');
+        }
+        client = null;
+      }
+    }
+  }
 }
 
 // Créer la table employees si elle n'existe pas
@@ -56,8 +88,7 @@ async function createEmployeesTable() {
   `;
   
   try {
-    const dbClient = await getClient();
-    await dbClient.query(createTableQuery);
+    await executeQuery(createTableQuery);
     console.log('✅ Table employees créée/vérifiée');
   } catch (err) {
     console.error('❌ Erreur création table employees:', err);
@@ -76,12 +107,10 @@ async function addEmployee(employee) {
     password = 'password123'
   } = employee;
   
-  const result = await getClient().then(client =>
-    client.query(
-      `INSERT INTO employees (nom, email, fonction, departement, actif, role, password)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [nom, email, fonction, departement, actif, role, password]
-    )
+  const result = await executeQuery(
+    `INSERT INTO employees (nom, email, fonction, departement, actif, role, password)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+    [nom, email, fonction, departement, actif, role, password]
   );
   return result.rows[0];
 }
@@ -89,8 +118,7 @@ async function addEmployee(employee) {
 // Récupérer tous les employés
 async function getEmployees() {
   try {
-    const dbClient = await getClient();
-    const result = await dbClient.query('SELECT * FROM employees ORDER BY nom');
+    const result = await executeQuery('SELECT * FROM employees ORDER BY nom');
     return result.rows;
   } catch (err) {
     console.error('❌ Erreur récupération employés:', err);
@@ -100,17 +128,14 @@ async function getEmployees() {
 
 // Récupérer un employé par ID
 async function getEmployeeById(id) {
-  const result = await getClient().then(client =>
-    client.query('SELECT * FROM employees WHERE id = $1', [id])
-  );
+  const result = await executeQuery('SELECT * FROM employees WHERE id = $1', [id]);
   return result.rows[0];
 }
 
 // Récupérer un employé par email
 async function getEmployeeByEmail(email) {
   try {
-    const dbClient = await getClient();
-    const result = await dbClient.query('SELECT * FROM employees WHERE email = $1', [email]);
+    const result = await executeQuery('SELECT * FROM employees WHERE email = $1', [email]);
     return result.rows[0];
   } catch (err) {
     console.error('❌ Erreur récupération employé par email:', err);
@@ -121,8 +146,7 @@ async function getEmployeeByEmail(email) {
 // Récupérer un employé par nom
 async function getEmployeeByName(nom) {
   try {
-    const dbClient = await getClient();
-    const result = await dbClient.query('SELECT * FROM employees WHERE nom = $1', [nom]);
+    const result = await executeQuery('SELECT * FROM employees WHERE nom = $1', [nom]);
     return result.rows[0];
   } catch (err) {
     console.error('❌ Erreur récupération employé par nom:', err);
@@ -130,36 +154,38 @@ async function getEmployeeByName(nom) {
   }
 }
 
-// Modifier un employé
-async function updateEmployee(id, employee) {
-  const {
-    nom,
-    email,
-    fonction,
-    departement,
-    actif,
-    role = 'user',
-    password
-  } = employee;
-  
-  const result = await getClient().then(client =>
-    client.query(
-      `UPDATE employees 
-       SET nom = $1, email = $2, fonction = $3, departement = $4, actif = $5, role = $6, password = $7, date_modification = CURRENT_TIMESTAMP
-       WHERE id = $8 RETURNING *`,
-      [nom, email, fonction, departement, actif, role, password, id]
-    )
-  );
-  return result.rows[0];
+// Mettre à jour un employé
+async function updateEmployee(id, updates) {
+  try {
+    const { nom, email, fonction, departement, role, password, actif } = updates;
+    
+    let query = 'UPDATE employees SET nom = $1, email = $2, fonction = $3, departement = $4, role = $5, actif = $6';
+    let values = [nom, email, fonction, departement, role, actif];
+    let paramIndex = 7;
+    
+    // Ajouter le mot de passe seulement s'il est fourni
+    if (password && password.trim() !== '') {
+      query += `, password = $${paramIndex}`;
+      values.push(password);
+      paramIndex++;
+    }
+    
+    query += `, date_modification = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`;
+    values.push(id);
+    
+    const result = await executeQuery(query, values);
+    return result.rows[0];
+  } catch (err) {
+    console.error('❌ Erreur mise à jour employé:', err);
+    throw err;
+  }
 }
 
 // Supprimer (désactiver) un employé
 async function deleteEmployee(id) {
-  const result = await getClient().then(client =>
-    client.query(
-      'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
-      [id]
-    )
+  const result = await executeQuery(
+    'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+    [id]
   );
   return result.rows[0];
 }
@@ -172,7 +198,7 @@ module.exports = {
   getEmployees,
   getEmployeeById,
   getEmployeeByEmail,
-  getEmployeeByName, // Ajouter cette fonction
+  getEmployeeByName,
   updateEmployee,
   deleteEmployee
 }; 
