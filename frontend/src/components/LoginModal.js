@@ -5,6 +5,7 @@ import { login } from '../api/auth';
 export default function LoginModal({ isOpen, onClose, onLogin }) {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,12 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     setError('');
 
     try {
+      console.log('🔍 Tentative de connexion pour:', selectedEmployee); // Utiliser selectedEmployee au lieu de email
+      console.log('📧 Email envoyé:', selectedEmployee);
+      console.log(' Mot de passe envoyé:', password);
+      
       const response = await login({
-        nom: selectedEmployee.nom, // Utiliser le nom au lieu de l'email
+        nom: selectedEmployee, // Utiliser selectedEmployee au lieu de email
         password: password
       });
       
