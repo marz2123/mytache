@@ -17,7 +17,7 @@ export const getEmployees = async () => {
 
 // Récupérer un employé par ID
 export async function getEmployeeById(id) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/employees/${id}`, {
     headers: getHeaders()
   });
   if (!response.ok) throw new Error("Employé non trouvé");
@@ -26,7 +26,7 @@ export async function getEmployeeById(id) {
 
 // Ajouter un employé
 export async function addEmployee(employee) {
-  const response = await fetch(API_BASE_URL, {
+  const response = await fetch(`${API_BASE_URL}/api/employees`, {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(employee),
@@ -37,7 +37,7 @@ export async function addEmployee(employee) {
 
 // Mettre à jour un employé
 export async function updateEmployee(id, employee) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/employees/${id}`, {
     method: "PUT",
     headers: getHeaders(),
     body: JSON.stringify(employee),
@@ -48,7 +48,7 @@ export async function updateEmployee(id, employee) {
 
 // Supprimer un employé
 export async function deleteEmployee(id) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/employees/${id}`, {
     method: "DELETE",
     headers: getHeaders()
   });
