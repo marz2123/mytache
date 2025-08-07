@@ -1,15 +1,23 @@
-const { Pool } = require('pg');
+const { Client } = require('pg');
 
 // Debug pour voir les variables d'environnement
 console.log('🔍 DATABASE_URL:', process.env.DATABASE_URL ? 'PRESENT' : 'MISSING');
 
-// Forcer l'utilisation de DATABASE_URL pour Supabase
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
+// Utiliser Client au lieu de Pool pour éviter les problèmes SASL
+let client = null;
+
+async function getClient() {
+  if (!client) {
+    client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+    await client.connect();
   }
-});
+  return client;
+}
 
 // Créer la table employees si elle n'existe pas
 async function createEmployeesTable() {
@@ -29,11 +37,11 @@ async function createEmployeesTable() {
   `;
   
   try {
-    await pool.query(createTableQuery);
+    const dbClient = await getClient();
+    await dbClient.query(createTableQuery);
     console.log('✅ Table employees créée/vérifiée');
   } catch (err) {
     console.error('❌ Erreur création table employees:', err);
-    // Ne pas faire planter l'application
   }
 }
 
@@ -49,10 +57,12 @@ async function addEmployee(employee) {
     password = 'password123'
   } = employee;
   
-  const result = await pool.query(
-    `INSERT INTO employees (nom, email, fonction, departement, actif, role, password)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [nom, email, fonction, departement, actif, role, password]
+  const result = await getClient().then(client =>
+    client.query(
+      `INSERT INTO employees (nom, email, fonction, departement, actif, role, password)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [nom, email, fonction, departement, actif, role, password]
+    )
   );
   return result.rows[0];
 }
@@ -60,17 +70,20 @@ async function addEmployee(employee) {
 // Récupérer tous les employés
 async function getEmployees() {
   try {
-    const result = await pool.query('SELECT * FROM employees ORDER BY nom');
+    const dbClient = await getClient();
+    const result = await dbClient.query('SELECT * FROM employees ORDER BY nom');
     return result.rows;
   } catch (err) {
     console.error('❌ Erreur récupération employés:', err);
-    return []; // Retourner un tableau vide en cas d'erreur
+    return [];
   }
 }
 
 // Récupérer un employé par ID
 async function getEmployeeById(id) {
-  const result = await pool.query('SELECT * FROM employees WHERE id = $1', [id]);
+  const result = await getClient().then(client =>
+    client.query('SELECT * FROM employees WHERE id = $1', [id])
+  );
   return result.rows[0];
 }
 
@@ -86,20 +99,24 @@ async function updateEmployee(id, employee) {
     password
   } = employee;
   
-  const result = await pool.query(
-    `UPDATE employees 
-     SET nom = $1, email = $2, fonction = $3, departement = $4, actif = $5, role = $6, password = $7, date_modification = CURRENT_TIMESTAMP
-     WHERE id = $8 RETURNING *`,
-    [nom, email, fonction, departement, actif, role, password, id]
+  const result = await getClient().then(client =>
+    client.query(
+      `UPDATE employees 
+       SET nom = $1, email = $2, fonction = $3, departement = $4, actif = $5, role = $6, password = $7, date_modification = CURRENT_TIMESTAMP
+       WHERE id = $8 RETURNING *`,
+      [nom, email, fonction, departement, actif, role, password, id]
+    )
   );
   return result.rows[0];
 }
 
 // Supprimer (désactiver) un employé
 async function deleteEmployee(id) {
-  const result = await pool.query(
-    'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
-    [id]
+  const result = await getClient().then(client =>
+    client.query(
+      'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+      [id]
+    )
   );
   return result.rows[0];
 }
