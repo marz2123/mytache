@@ -1,27 +1,26 @@
-const employeeModel = require('../models/employeeModel');
+const { getEmployeeByEmail } = require('../models/employeeModel');
 
-// Authentifier un utilisateur
 exports.login = async (req, res) => {
   try {
-    const { nom, password } = req.body;
+    const { email, password } = req.body;
     
-    // Récupérer l'employé par nom
-    const employees = await employeeModel.getEmployees();
-    const employee = employees.find(emp => emp.nom === nom);
+    console.log('🔍 Tentative de connexion pour:', email);
+    
+    // Récupérer l'employé par email
+    const employee = await getEmployeeByEmail(email);
     
     if (!employee) {
-      return res.status(401).json({ error: 'Utilisateur non trouvé' });
+      console.log('❌ Utilisateur non trouvé:', email);
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
     
-    if (!employee.actif) {
-      return res.status(401).json({ error: 'Compte désactivé' });
-    }
-    
+    // Vérifier le mot de passe
     if (employee.password !== password) {
-      return res.status(401).json({ error: 'Mot de passe incorrect' });
+      console.log('❌ Mot de passe incorrect pour:', email);
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
     
-    // Authentification réussie
+    console.log('✅ Connexion réussie pour:', email);
     res.json({
       success: true,
       user: {
@@ -29,13 +28,12 @@ exports.login = async (req, res) => {
         nom: employee.nom,
         email: employee.email,
         role: employee.role,
-        fonction: employee.fonction,
         departement: employee.departement
       }
     });
     
-  } catch (err) {
-    console.error('Erreur authentification:', err);
-    res.status(500).json({ error: 'Erreur lors de l\'authentification' });
+  } catch (error) {
+    console.error('❌ Erreur lors de la connexion:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 }; 

@@ -106,6 +106,18 @@ async function getEmployeeById(id) {
   return result.rows[0];
 }
 
+// Récupérer un employé par email
+async function getEmployeeByEmail(email) {
+  try {
+    const dbClient = await getClient();
+    const result = await dbClient.query('SELECT * FROM employees WHERE email = $1', [email]);
+    return result.rows[0];
+  } catch (err) {
+    console.error('❌ Erreur récupération employé par email:', err);
+    return null;
+  }
+}
+
 // Modifier un employé
 async function updateEmployee(id, employee) {
   const {
@@ -147,6 +159,7 @@ module.exports = {
   addEmployee,
   getEmployees,
   getEmployeeById,
+  getEmployeeByEmail, // Ajouter cette fonction
   updateEmployee,
   deleteEmployee
 }; 
