@@ -10,17 +10,17 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Configuration CORS pour autoriser Vercel
+// Configuration CORS pour autoriser le nouveau domaine
 app.use(cors({
   origin: [
-    'https://mytache.groupemyhome.com', // ✅ Nouveau domaine
+    'https://mytache.groupemyhome.com', // ✅ Nouveau domaine frontend
     'https://mytache.vercel.app',
     'https://mytache-marzs-projects-6da00859.vercel.app',
-    'http://localhost:3000' // Pour le développement local
+    'http://localhost:3000'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-current-user'] // ✅ Ajouter x-current-user
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-current-user']
 }));
 
 app.use(express.json());

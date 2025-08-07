@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://mytache.groupemyhome.com'; // ✅ Nouveau domaine
+const API_BASE_URL = 'https://mytache-production.up.railway.app'; // ✅ Backend Railway
 
 export const getTasks = async () => {
   const response = await fetch(`${API_BASE_URL}/api/tasks`);
