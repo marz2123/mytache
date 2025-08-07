@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://mytache-production.up.railway.app';
+const API_BASE_URL = 'https://mytache.groupemyhome.com'; // ✅ Nouveau domaine
 
 // Fonction helper pour obtenir les headers avec l'utilisateur connecté
 const getHeaders = () => {

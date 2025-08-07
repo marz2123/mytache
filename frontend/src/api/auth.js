@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://mytache-production.up.railway.app';
+const API_BASE_URL = 'https://mytache.groupemyhome.com'; // ✅ Nouveau domaine
 
 export const login = async (credentials) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {

@@ -13,6 +13,7 @@ const port = process.env.PORT || 5000;
 // Configuration CORS pour autoriser Vercel
 app.use(cors({
   origin: [
+    'https://mytache.groupemyhome.com', // ✅ Nouveau domaine
     'https://mytache.vercel.app',
     'https://mytache-marzs-projects-6da00859.vercel.app',
     'http://localhost:3000' // Pour le développement local
