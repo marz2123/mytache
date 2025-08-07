@@ -40,17 +40,26 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     setError('');
 
     try {
-      const result = await login(selectedEmployee, password);
+      const response = await login({
+        email: selectedEmployee.email,
+        password: password
+      });
       
-      // Sauvegarder les infos utilisateur dans localStorage
-      localStorage.setItem('currentUser', JSON.stringify(result.user));
+      console.log('✅ Réponse de connexion:', response);
       
-      // Fermer la modale et notifier le parent
-      onLogin(result.user);
-      onClose();
+      if (response.success) {
+        // Connexion réussie
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        onLogin(response.user);
+        onClose();
+      } else {
+        // Erreur de connexion
+        setError(response.error || 'Erreur de connexion');
+      }
       
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      console.error('❌ Erreur lors de la connexion:', error);
+      setError('Erreur de connexion');
     }
     
     setLoading(false);
