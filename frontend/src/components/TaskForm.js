@@ -39,6 +39,7 @@ export default function TaskForm() {
   const [speechingIdx, setSpeechingIdx] = useState(null);
   let recognitionRef = useRef(null);
   const [showSpeechInfo, setShowSpeechInfo] = useState(false);
+  const [collaboratorValidation, setCollaboratorValidation] = useState({});
 
   // Charger l'utilisateur connecté
   useEffect(() => {
@@ -103,7 +104,60 @@ export default function TaskForm() {
     newTasks[idx][name] = value;
     // Si la catégorie change, mémorise-la
     if (name === 'category') setDefaultCategory(value);
+    
+    // Valider les collaborateurs supplémentaires
+    if (name === 'additional_collaborators') {
+      validateCollaborators(idx, value);
+    }
+    
     setTasks(newTasks);
+  };
+
+  // Fonction pour valider les noms des collaborateurs
+  const validateCollaborators = (taskIdx, collaboratorsText) => {
+    if (!collaboratorsText.trim()) {
+      setCollaboratorValidation(prev => ({ ...prev, [taskIdx]: { valid: true, errors: [] } }));
+      return;
+    }
+
+    const collaboratorNames = collaboratorsText
+      .split(',')
+      .map(name => name.trim())
+      .filter(name => name !== '');
+
+    const errors = [];
+    const validNames = [];
+
+    collaboratorNames.forEach(name => {
+      const foundEmployee = employees.find(emp => 
+        emp.nom.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (foundEmployee) {
+        validNames.push(foundEmployee.nom);
+      } else {
+        // Chercher des noms similaires
+        const similarNames = employees
+          .filter(emp => emp.nom.toLowerCase().includes(name.toLowerCase()) || 
+                        name.toLowerCase().includes(emp.nom.toLowerCase()))
+          .map(emp => emp.nom);
+        
+        if (similarNames.length > 0) {
+          errors.push(`${name} → Suggestions: ${similarNames.join(', ')}`);
+        } else {
+          errors.push(`${name} → Utilisateur non trouvé`);
+        }
+      }
+    });
+
+    setCollaboratorValidation(prev => ({
+      ...prev,
+      [taskIdx]: {
+        valid: errors.length === 0,
+        errors,
+        validNames
+      }
+    }));
   };
 
   const addRow = () => setTasks([...tasks, emptyTask(defaultCategory)]);
@@ -140,14 +194,13 @@ export default function TaskForm() {
           await addTask(collaborationTask);
         }
 
-        // Si des collaborateurs supplémentaires sont spécifiés (pour les admins)
+        // Si des collaborateurs supplémentaires sont spécifiés
         if (task.additional_collaborators && task.additional_collaborators.trim() !== '') {
-          const additionalCollaborators = task.additional_collaborators
-            .split(',')
-            .map(name => name.trim())
-            .filter(name => name !== '');
+          // Utiliser seulement les noms validés
+          const validation = collaboratorValidation[tasks.indexOf(task)];
+          const validCollaborators = validation && validation.validNames ? validation.validNames : [];
 
-          for (const collaboratorName of additionalCollaborators) {
+          for (const collaboratorName of validCollaborators) {
             const additionalCollaborationTask = {
               ...task,
               employee_name: collaboratorName,
@@ -568,24 +621,47 @@ export default function TaskForm() {
                       </div>
                     </div>
 
-                    {/* Ligne 3 : Collaborateurs supplémentaires (pour les admins) */}
-                    {currentUser && currentUser.role === 'admin' && (
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          Collaborateurs supplémentaires (séparés par des virgules)
-                        </label>
-                        <div className="relative">
-                          <input
-                            name="additional_collaborators"
-                            value={task.additional_collaborators || ''}
-                            onChange={e => handleTaskChange(idx, e)}
-                            placeholder="Ex: Jean Dupont, Marie Martin"
-                            className="w-full border-2 border-green-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg text-sm"
-                          />
-                          <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
-                        </div>
+                    {/* Ligne 3 : Collaborateurs supplémentaires (pour tous les utilisateurs) */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Collaborateurs supplémentaires (séparés par des virgules)
+                      </label>
+                      <div className="relative">
+                        <input
+                          name="additional_collaborators"
+                          value={task.additional_collaborators || ''}
+                          onChange={e => handleTaskChange(idx, e)}
+                          placeholder="Ex: Jean Dupont, Marie Martin"
+                          className="w-full border-2 border-green-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg text-sm"
+                        />
+                        <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
                       </div>
-                    )}
+                      <div className="mt-1 text-xs text-gray-500">
+                        💡 Tapez les noms exacts des collaborateurs. Ils seront vérifiés automatiquement.
+                      </div>
+                      
+                      {/* Affichage des erreurs de validation */}
+                      {collaboratorValidation[idx] && !collaboratorValidation[idx].valid && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="text-xs text-red-600 font-medium mb-1">⚠️ Erreurs de validation :</div>
+                          {collaboratorValidation[idx].errors.map((error, errorIdx) => (
+                            <div key={errorIdx} className="text-xs text-red-500 mb-1">
+                              • {error}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Affichage des noms validés */}
+                      {collaboratorValidation[idx] && collaboratorValidation[idx].valid && collaboratorValidation[idx].validNames.length > 0 && (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="text-xs text-green-600 font-medium mb-1">✅ Collaborateurs validés :</div>
+                          <div className="text-xs text-green-500">
+                            {collaboratorValidation[idx].validNames.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
