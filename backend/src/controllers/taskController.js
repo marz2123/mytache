@@ -3,6 +3,18 @@ const taskModel = require('../models/taskModel');
 // Ajouter une tâche
 exports.addTask = async (req, res) => {
   try {
+    // Récupérer l'utilisateur connecté depuis les headers
+    const currentUser = req.headers['x-current-user'] ? JSON.parse(req.headers['x-current-user']) : null;
+    
+    // Si l'utilisateur n'est pas admin, vérifier qu'il ne peut créer que des tâches pour lui-même
+    if (currentUser && currentUser.role !== 'admin') {
+      if (req.body.employee_name !== currentUser.nom) {
+        return res.status(403).json({ 
+          error: 'Vous ne pouvez créer des tâches que pour vous-même' 
+        });
+      }
+    }
+    
     const newTask = await taskModel.addTask(req.body);
     res.status(201).json(newTask);
   } catch (err) {
