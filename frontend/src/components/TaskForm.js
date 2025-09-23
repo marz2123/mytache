@@ -40,6 +40,8 @@ export default function TaskForm() {
   let recognitionRef = useRef(null);
   const [showSpeechInfo, setShowSpeechInfo] = useState(false);
   const [collaboratorValidation, setCollaboratorValidation] = useState({});
+  const [showSuggestions, setShowSuggestions] = useState({});
+  const [activeInput, setActiveInput] = useState(null);
 
   // Charger l'utilisateur connecté
   useEffect(() => {
@@ -55,6 +57,21 @@ export default function TaskForm() {
       }));
       setDefaultCategory(user.departement || 'Non définie');
     }
+  }, []);
+
+  // Fermer les suggestions quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.collaborator-input-container')) {
+        setShowSuggestions({});
+        setActiveInput(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Charger la liste des utilisateurs et mettre à jour la catégorie si nécessaire
@@ -113,6 +130,61 @@ export default function TaskForm() {
     setTasks(newTasks);
   };
 
+  // Fonction pour gérer l'autocomplétion
+  const handleCollaboratorInput = (taskIdx, e) => {
+    const { value } = e.target;
+    const newTasks = [...tasks];
+    newTasks[taskIdx].additional_collaborators = value;
+    setTasks(newTasks);
+
+    // Trouver le dernier nom en cours de frappe
+    const names = value.split(',').map(n => n.trim());
+    const currentName = names[names.length - 1];
+
+    if (currentName.length >= 2) {
+      // Chercher des suggestions
+      const suggestions = employees
+        .filter(emp => emp.nom.toLowerCase().includes(currentName.toLowerCase()))
+        .map(emp => emp.nom)
+        .slice(0, 5); // Limiter à 5 suggestions
+
+      setShowSuggestions(prev => ({
+        ...prev,
+        [taskIdx]: suggestions
+      }));
+      setActiveInput(taskIdx);
+    } else {
+      setShowSuggestions(prev => ({
+        ...prev,
+        [taskIdx]: []
+      }));
+    }
+
+    // Valider les noms complets
+    validateCollaborators(taskIdx, value);
+  };
+
+  // Fonction pour sélectionner une suggestion
+  const selectSuggestion = (taskIdx, suggestion) => {
+    const currentValue = tasks[taskIdx].additional_collaborators;
+    const names = currentValue.split(',').map(n => n.trim());
+    names[names.length - 1] = suggestion; // Remplacer le dernier nom
+    const newValue = names.join(', ');
+
+    const newTasks = [...tasks];
+    newTasks[taskIdx].additional_collaborators = newValue;
+    setTasks(newTasks);
+
+    // Fermer les suggestions
+    setShowSuggestions(prev => ({
+      ...prev,
+      [taskIdx]: []
+    }));
+
+    // Valider
+    validateCollaborators(taskIdx, newValue);
+  };
+
   // Fonction pour valider les noms des collaborateurs
   const validateCollaborators = (taskIdx, collaboratorsText) => {
     if (!collaboratorsText.trim()) {
@@ -136,17 +208,7 @@ export default function TaskForm() {
       if (foundEmployee) {
         validNames.push(foundEmployee.nom);
       } else {
-        // Chercher des noms similaires
-        const similarNames = employees
-          .filter(emp => emp.nom.toLowerCase().includes(name.toLowerCase()) || 
-                        name.toLowerCase().includes(emp.nom.toLowerCase()))
-          .map(emp => emp.nom);
-        
-        if (similarNames.length > 0) {
-          errors.push(`${name} → Suggestions: ${similarNames.join(', ')}`);
-        } else {
-          errors.push(`${name} → Utilisateur non trouvé`);
-        }
+        errors.push(`${name} → Utilisateur non trouvé`);
       }
     });
 
@@ -626,18 +688,47 @@ export default function TaskForm() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Collaborateurs supplémentaires (séparés par des virgules)
                       </label>
-                      <div className="relative">
+                      <div className="relative collaborator-input-container">
                         <input
                           name="additional_collaborators"
                           value={task.additional_collaborators || ''}
-                          onChange={e => handleTaskChange(idx, e)}
+                          onChange={e => handleCollaboratorInput(idx, e)}
+                          onFocus={() => setActiveInput(idx)}
+                          onBlur={() => {
+                            // Délai pour permettre le clic sur les suggestions
+                            setTimeout(() => {
+                              setActiveInput(null);
+                              setShowSuggestions(prev => ({ ...prev, [idx]: [] }));
+                            }, 200);
+                          }}
                           placeholder="Ex: Jean Dupont, Marie Martin"
                           className="w-full border-2 border-green-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg text-sm"
                         />
                         <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
+                        
+                        {/* Suggestions d'autocomplétion */}
+                        {showSuggestions[idx] && showSuggestions[idx].length > 0 && activeInput === idx && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                            {showSuggestions[idx].map((suggestion, suggestionIdx) => (
+                              <div
+                                key={suggestionIdx}
+                                className="px-3 py-2 hover:bg-green-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0"
+                                onMouseDown={(e) => {
+                                  e.preventDefault(); // Empêcher le blur
+                                  selectSuggestion(idx, suggestion);
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                  <span className="text-gray-700">{suggestion}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="mt-1 text-xs text-gray-500">
-                        💡 Tapez les noms exacts des collaborateurs. Ils seront vérifiés automatiquement.
+                        💡 Tapez les noms des collaborateurs. Des suggestions apparaîtront automatiquement - cliquez pour sélectionner !
                       </div>
                       
                       {/* Affichage des erreurs de validation */}
