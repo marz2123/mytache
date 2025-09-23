@@ -70,4 +70,63 @@ exports.deleteEmployee = async (req, res) => {
     console.error('Erreur suppression employé:', err);
     res.status(500).json({ error: 'Erreur lors de la suppression de l\'employé' });
   }
+};
+
+// Créer un utilisateur admin (endpoint spécial)
+exports.createAdmin = async (req, res) => {
+  try {
+    const { nom, email, password = 'admin123' } = req.body;
+    
+    if (!nom || !email) {
+      return res.status(400).json({ error: 'Nom et email requis' });
+    }
+
+    const adminData = {
+      nom,
+      email,
+      fonction: 'Administrateur',
+      departement: 'IT',
+      role: 'admin',
+      password,
+      actif: true
+    };
+
+    const newAdmin = await employeeModel.addEmployee(adminData);
+    res.status(201).json({ 
+      message: 'Utilisateur admin créé avec succès', 
+      admin: {
+        id: newAdmin.id,
+        nom: newAdmin.nom,
+        email: newAdmin.email,
+        role: newAdmin.role
+      }
+    });
+  } catch (err) {
+    console.error('Erreur création admin:', err);
+    if (err.code === '23505') { // Erreur de contrainte unique
+      res.status(400).json({ error: 'Un utilisateur avec cet email existe déjà' });
+    } else {
+      res.status(500).json({ error: 'Erreur lors de la création de l\'admin' });
+    }
+  }
+};
+
+// Mettre à jour le rôle d'un utilisateur en admin
+exports.makeAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedEmployee = await employeeModel.updateEmployee(id, { role: 'admin' });
+    res.json({ 
+      message: 'Utilisateur promu administrateur avec succès', 
+      employee: {
+        id: updatedEmployee.id,
+        nom: updatedEmployee.nom,
+        email: updatedEmployee.email,
+        role: updatedEmployee.role
+      }
+    });
+  } catch (err) {
+    console.error('Erreur promotion admin:', err);
+    res.status(500).json({ error: 'Erreur lors de la promotion en admin' });
+  }
 }; 

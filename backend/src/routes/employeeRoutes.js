@@ -17,4 +17,10 @@ router.put('/:id', employeeController.updateEmployee);
 // Supprimer (désactiver) un employé
 router.delete('/:id', employeeController.deleteEmployee);
 
+// Créer un utilisateur admin
+router.post('/create-admin', employeeController.createAdmin);
+
+// Promouvoir un utilisateur en admin
+router.put('/:id/make-admin', employeeController.makeAdmin);
+
 module.exports = router; 

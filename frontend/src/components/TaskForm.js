@@ -12,7 +12,8 @@ const emptyTask = (category) => ({
   priority: 'Normale',
   comment: '',
   collaboration: '',
-  collaborator: ''
+  collaborator: '',
+  additional_collaborators: ''
 });
 
 export default function TaskForm() {
@@ -115,7 +116,7 @@ export default function TaskForm() {
   const handleSubmit = async e => {
     e.preventDefault();
     if (!formData.employee_name) {
-      setMessage('Veuillez saisir votre nom.');
+      setMessage('Veuillez sélectionner un utilisateur assigné.');
       return;
     }
     try {
@@ -137,6 +138,25 @@ export default function TaskForm() {
             category: task.category || defaultCategory
           };
           await addTask(collaborationTask);
+        }
+
+        // Si des collaborateurs supplémentaires sont spécifiés (pour les admins)
+        if (task.additional_collaborators && task.additional_collaborators.trim() !== '') {
+          const additionalCollaborators = task.additional_collaborators
+            .split(',')
+            .map(name => name.trim())
+            .filter(name => name !== '');
+
+          for (const collaboratorName of additionalCollaborators) {
+            const additionalCollaborationTask = {
+              ...task,
+              employee_name: collaboratorName,
+              task_name: `[Collaboration] ${task.task_name}`,
+              comment: `Collaboration avec ${formData.employee_name}: ${task.collaboration || 'Pas de description'}`,
+              category: task.category || defaultCategory
+            };
+            await addTask(additionalCollaborationTask);
+          }
         }
       }
       setMessage('Tâches ajoutées avec succès !');
@@ -194,6 +214,23 @@ export default function TaskForm() {
         {/* Carte principale avec design moderne */}
         <div className="bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/50 backdrop-blur-sm rounded-3xl shadow-2xl border-2 border-gradient-to-r from-blue-200/50 to-purple-200/50 p-8 md:p-10">
           
+          {/* Indicateur admin */}
+          {currentUser && currentUser.role === 'admin' && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-purple-100 to-indigo-100 border border-purple-200 rounded-xl">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-800">Mode Administrateur</h3>
+                  <p className="text-sm text-purple-600">Vous pouvez créer des tâches pour tous les utilisateurs et gérer les collaborations multiples.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Nom utilisateur et catégorie avec design moderne */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
@@ -203,11 +240,26 @@ export default function TaskForm() {
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
                 </div>
-                Utilisateur *
+                Utilisateur assigné *
               </label>
-              <div className="bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-medium">
-                {currentUser ? currentUser.nom : formData.employee_name || 'Non connecté'}
-              </div>
+              {currentUser && currentUser.role === 'admin' ? (
+                <select
+                  name="employee_name"
+                  value={formData.employee_name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full border-2 border-blue-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white"
+                >
+                  <option value="">Sélectionner un utilisateur</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.nom}>{emp.nom}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="bg-gray-50 border-2 border-gray-200 rounded-lg px-3 py-2 text-gray-700 font-medium">
+                  {currentUser ? currentUser.nom : formData.employee_name || 'Non connecté'}
+                </div>
+              )}
             </div>
             <div className="flex-1">
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
@@ -223,22 +275,22 @@ export default function TaskForm() {
                   {defaultCategory || 'Non définie'}
                 </div>
               ) : (
-                <select
-                  name="category"
+        <select
+          name="category"
                   value={formData.category}
                   onChange={handleInputChange}
                   className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white"
                 >
                   <option value="">Non définie</option>
-                  <option value="Chantier">Chantier</option>
-                  <option value="Projet">Projet</option>
+          <option value="Chantier">Chantier</option>
+          <option value="Projet">Projet</option>
                   <option value="Société">Société</option>
-                </select>
+        </select>
               )}
             </div>
-          </div>
+      </div>
 
-          {tasks.map((task, idx) => (
+      {tasks.map((task, idx) => (
             <div key={idx} className="bg-gradient-to-br from-white via-orange-50/30 to-red-50/30 border-2 border-gradient-to-r from-orange-200/50 to-red-200/50 p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 animate-slide-up mb-8 relative overflow-hidden">
               {/* Effet de fond décoratif */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-100/20 to-red-100/20 rounded-full -translate-y-16 translate-x-16"></div>
@@ -275,17 +327,17 @@ export default function TaskForm() {
                   Nom de la tâche *
                 </label>
                 <div className="relative">
-                  <input
-                    name="task_name"
-                    value={task.task_name}
-                    onChange={e => handleTaskChange(idx, e)}
-                    required
+            <input
+              name="task_name"
+              value={task.task_name}
+              onChange={e => handleTaskChange(idx, e)}
+              required
                     placeholder="Ex: Réparer la machine à café"
                     className="w-full border-2 border-green-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-                  />
+            />
                   <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
                 </div>
-              </div>
+          </div>
 
               {/* Grille des champs avec design moderne */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 relative z-10">
@@ -300,18 +352,18 @@ export default function TaskForm() {
                     Statut *
                   </label>
                   <div className="relative">
-                    <select
-                      name="status"
-                      value={task.status}
-                      onChange={e => handleTaskChange(idx, e)}
-                      required
+            <select
+              name="status"
+              value={task.status}
+              onChange={e => handleTaskChange(idx, e)}
+              required
                       className="w-full border-2 border-blue-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-                    >
+            >
                       <option value="">Choisir</option>
                       <option value="À faire">À faire</option>
-                      <option value="En cours">En cours</option>
-                      <option value="Terminé">Terminé</option>
-                    </select>
+              <option value="En cours">En cours</option>
+              <option value="Terminé">Terminé</option>
+            </select>
                     <div className="absolute inset-0 rounded-xl border-2 border-blue-300/30 pointer-events-none"></div>
                   </div>
                 </div>
@@ -326,9 +378,9 @@ export default function TaskForm() {
                     Date
                   </label>
                   <div className="relative">
-                    <input
+            <input
                       name="date"
-                      type="date"
+              type="date"
                       value={task.date}
                       onChange={e => handleTaskChange(idx, e)}
                       className="w-full border-2 border-purple-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
@@ -351,7 +403,7 @@ export default function TaskForm() {
                       name="start_time"
                       type="time"
                       value={task.start_time || ''}
-                      onChange={e => handleTaskChange(idx, e)}
+              onChange={e => handleTaskChange(idx, e)}
                       className="w-full border-2 border-orange-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
                     />
                     <div className="absolute inset-0 rounded-xl border-2 border-orange-300/30 pointer-events-none"></div>
@@ -371,17 +423,17 @@ export default function TaskForm() {
                     Priorité
                   </label>
                   <div className="relative">
-                    <select
-                      name="priority"
-                      value={task.priority}
-                      onChange={e => handleTaskChange(idx, e)}
+            <select
+              name="priority"
+              value={task.priority}
+              onChange={e => handleTaskChange(idx, e)}
                       className="w-full border-2 border-red-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-                    >
+            >
                       <option value="">Choisir</option>
-                      <option value="Basse">Basse</option>
-                      <option value="Normale">Normale</option>
-                      <option value="Urgente">Urgente</option>
-                    </select>
+              <option value="Basse">Basse</option>
+              <option value="Normale">Normale</option>
+              <option value="Urgente">Urgente</option>
+            </select>
                     <div className="absolute inset-0 rounded-xl border-2 border-red-300/30 pointer-events-none"></div>
                   </div>
                 </div>
@@ -396,10 +448,10 @@ export default function TaskForm() {
                     Durée estimée
                   </label>
                   <div className="relative">
-                    <input
-                      name="estimated_duration"
-                      value={task.estimated_duration}
-                      onChange={e => handleTaskChange(idx, e)}
+            <input
+              name="estimated_duration"
+              value={task.estimated_duration}
+              onChange={e => handleTaskChange(idx, e)}
                       placeholder="Ex: 2h30"
                       className="w-full border-2 border-teal-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
                     />
@@ -417,17 +469,17 @@ export default function TaskForm() {
                     Lieu
                   </label>
                   <div className="relative">
-                    <input
-                      name="location"
-                      value={task.location}
-                      onChange={e => handleTaskChange(idx, e)}
+            <input
+              name="location"
+              value={task.location}
+              onChange={e => handleTaskChange(idx, e)}
                       placeholder="Ex: Bureau 3"
                       className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-                    />
+            />
                     <div className="absolute inset-0 rounded-xl border-2 border-indigo-300/30 pointer-events-none"></div>
                   </div>
                 </div>
-              </div>
+          </div>
 
               {/* Description de la tâche divisée en deux colonnes */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
@@ -442,10 +494,10 @@ export default function TaskForm() {
                     Description de la tâche
                   </label>
                   <div className="relative">
-                    <textarea
-                      name="comment"
-                      value={task.comment}
-                      onChange={e => handleTaskChange(idx, e)}
+          <textarea
+            name="comment"
+            value={task.comment}
+            onChange={e => handleTaskChange(idx, e)}
                       placeholder="Décrivez les détails de la tâche..."
                       className="w-full border-2 border-pink-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg resize-none pr-12"
                       rows={5}
@@ -456,17 +508,17 @@ export default function TaskForm() {
                       </div>
                     )}
                     {/* Bouton micro speech-to-text */}
-                    <button
-                      type="button"
+          <button 
+            type="button" 
                       aria-label="Saisir par la voix"
                       onClick={() => handleStartSpeech(idx)}
                       className={`absolute top-3 right-3 z-10 p-2 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white border border-pink-200 hover:bg-pink-50 ${speechingIdx === idx ? 'bg-pink-500 animate-pulse' : ''}`}
-                    >
+          >
                       {/* Nouvelle icône micro moderne (Heroicons solid) */}
                       <svg className={`w-6 h-6 ${speechingIdx === idx ? 'text-white' : 'text-pink-500'}`} fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 14a3 3 0 003-3V7a3 3 0 10-6 0v4a3 3 0 003 3zm5-3a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 0014 0z" />
                       </svg>
-                    </button>
+          </button>
                     <div className="absolute inset-0 rounded-xl border-2 border-pink-300/30 pointer-events-none"></div>
                   </div>
                 </div>
@@ -515,37 +567,56 @@ export default function TaskForm() {
                         <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
                       </div>
                     </div>
+
+                    {/* Ligne 3 : Collaborateurs supplémentaires (pour les admins) */}
+                    {currentUser && currentUser.role === 'admin' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">
+                          Collaborateurs supplémentaires (séparés par des virgules)
+                        </label>
+                        <div className="relative">
+                          <input
+                            name="additional_collaborators"
+                            value={task.additional_collaborators || ''}
+                            onChange={e => handleTaskChange(idx, e)}
+                            placeholder="Ex: Jean Dupont, Marie Martin"
+                            className="w-full border-2 border-green-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg text-sm"
+                          />
+                          <div className="absolute inset-0 rounded-xl border-2 border-green-300/30 pointer-events-none"></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-          
+        </div>
+      ))}
+      
           {/* Boutons avec design moderne */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <button 
-              type="button" 
-              onClick={addRow} 
+        <button 
+          type="button" 
+          onClick={addRow} 
               className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-medium shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center border-2 border-blue-400/30"
-            >
+        >
               <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
               Ajouter une tâche
-            </button>
-            <button 
-              type="submit" 
+        </button>
+        <button 
+          type="submit" 
               className="bg-gradient-to-r from-green-500 to-green-600 text-white px-10 py-4 rounded-2xl hover:from-green-600 hover:to-green-700 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center border-2 border-green-400/30"
-            >
+        >
               <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Valider
-            </button>
-          </div>
-          
+          Valider
+        </button>
+      </div>
+      
           {/* Message avec design moderne */}
-          {message && (
+      {message && (
             <div className={`mt-8 p-6 rounded-2xl border-2 animate-bounce-in ${
               message.includes('succès') 
                 ? 'bg-gradient-to-r from-green-50 to-green-100 text-green-700 border-green-200 shadow-lg' 
@@ -568,7 +639,7 @@ export default function TaskForm() {
             </div>
           )}
         </div>
-      </form>
+    </form>
     </div>
   );
 } 

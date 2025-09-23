@@ -396,7 +396,7 @@ export default function TaskDashboard() {
           {/* Tableau des tâches avec design moderne */}
         <div className="overflow-x-auto">
             <div className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/30 border border-blue-200/50 rounded-2xl shadow-lg">
-              <table className="min-w-[1200px] w-full">
+              <table className="min-w-[1400px] w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-blue-50/50">
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">
@@ -481,6 +481,16 @@ export default function TaskDashboard() {
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">
                       <div className="flex items-center">
+                        <div className="w-5 h-5 bg-gradient-to-r from-green-500 to-green-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        Collaboration
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b border-gray-200">
+                      <div className="flex items-center">
                         <div className="w-5 h-5 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
                           <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
@@ -543,6 +553,16 @@ export default function TaskDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {task.location || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {task.collaborator ? (
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                              <span className="text-green-700 font-medium">{task.collaborator}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(task.created_at).toLocaleDateString('fr-FR')}
