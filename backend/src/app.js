@@ -7,6 +7,9 @@ const dotenv = require('dotenv');
 // Charger les variables d'environnement depuis .env
 dotenv.config();
 
+// Configurer le timezone français
+process.env.TZ = 'Europe/Paris';
+
 const app = express();
 const port = process.env.PORT || 5000;
 

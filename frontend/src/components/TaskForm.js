@@ -2,10 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { addTask } from '../api/tasks';
 import { getEmployees } from '../api/employees';
 
+// Fonction pour obtenir la date française
+const getFrenchDate = () => {
+  const now = new Date();
+  // Convertir en timezone français
+  const frenchDate = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Paris"}));
+  return frenchDate.toISOString().split('T')[0];
+};
+
 const emptyTask = (category) => ({
   task_name: '',
   status: 'À faire',
-  date: new Date().toISOString().split('T')[0],
+  date: getFrenchDate(),
   start_time: '',
   location: '',
   estimated_duration: '',
@@ -23,7 +31,7 @@ export default function TaskForm() {
     category: '',
     task_name: '',
     status: 'À faire',
-    date: new Date().toISOString().split('T')[0],
+    date: getFrenchDate(),
     start_time: '',
     location: '',
     estimated_duration: '',

@@ -1,5 +1,8 @@
 const { Client } = require('pg');
 
+// Configurer le timezone français
+process.env.TZ = 'Europe/Paris';
+
 // Utiliser Client au lieu de Pool pour éviter les problèmes SASL
 let client = null;
 

@@ -4,6 +4,9 @@ const taskModel = require('./models/taskModel');
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Configurer le timezone français
+process.env.TZ = 'Europe/Paris';
+
 // Liste statique des employés à surveiller (adapter selon besoin)
 const EMPLOYEES = [
   { name: 'Alice', email: 'alice@exemple.com' },

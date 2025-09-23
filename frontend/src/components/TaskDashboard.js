@@ -116,6 +116,12 @@ export default function TaskDashboard() {
     }
   };
 
+  // Fonction pour obtenir la date française actuelle
+  const getFrenchDate = () => {
+    const now = new Date();
+    return new Date(now.toLocaleString("en-US", {timeZone: "Europe/Paris"}));
+  };
+
   const calculateTimeRemaining = (task) => {
     console.log('=== CALCUL TIME REMAINING ===');
     console.log('Task data:', {
@@ -132,7 +138,7 @@ export default function TaskDashboard() {
     }
 
     const taskDate = new Date(task.date);
-    const today = new Date();
+    const today = getFrenchDate();
     today.setHours(0, 0, 0, 0);
     taskDate.setHours(0, 0, 0, 0);
     
@@ -163,7 +169,7 @@ export default function TaskDashboard() {
         return { text: 'Date aujourd\'hui', color: 'bg-blue-100 text-blue-800' };
       }
 
-      const now = new Date();
+      const now = getFrenchDate();
       const currentTime = now.getHours() * 60 + now.getMinutes(); // Minutes depuis minuit
       
       // Parser l'heure de début (format "HH:MM:SS")
@@ -539,7 +545,7 @@ export default function TaskDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(task.date).toLocaleDateString('fr-FR')}
+                          {new Date(task.date).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${timeRemaining.color}`}>
@@ -565,7 +571,7 @@ export default function TaskDashboard() {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(task.created_at).toLocaleDateString('fr-FR')}
+                          {new Date(task.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">

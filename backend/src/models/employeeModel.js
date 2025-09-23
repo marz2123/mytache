@@ -80,8 +80,8 @@ async function createEmployeesTable() {
       fonction VARCHAR(100),
       departement VARCHAR(100),
       actif BOOLEAN DEFAULT true,
-      date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      date_creation TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      date_modification TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       role VARCHAR(20) DEFAULT 'user',
       password VARCHAR(255) DEFAULT 'password123'
     );
@@ -170,7 +170,7 @@ async function updateEmployee(id, updates) {
       paramIndex++;
     }
     
-    query += `, date_modification = CURRENT_TIMESTAMP WHERE id = $${paramIndex} RETURNING *`;
+    query += `, date_modification = CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Paris' WHERE id = $${paramIndex} RETURNING *`;
     values.push(id);
     
     const result = await executeQuery(query, values);
@@ -184,7 +184,7 @@ async function updateEmployee(id, updates) {
 // Supprimer (désactiver) un employé
 async function deleteEmployee(id) {
   const result = await executeQuery(
-    'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+    'UPDATE employees SET actif = false, date_modification = CURRENT_TIMESTAMP AT TIME ZONE \'Europe/Paris\' WHERE id = $1 RETURNING *',
     [id]
   );
   return result.rows[0];
