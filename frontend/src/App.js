@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navigation from './components/Navigation';
 import SaisiePage from './pages/SaisiePage';
 import DashboardPage from './pages/DashboardPage';
@@ -36,11 +36,13 @@ function App() {
   if (!currentUser) {
     return (
       <div className="App">
-        <LoginModal 
-          isOpen={showLoginModal} 
-          onClose={() => setShowLoginModal(false)}
-          onLogin={handleLogin}
-        />
+        {showLoginModal && (
+          <LoginModal 
+            isOpen={showLoginModal} 
+            onClose={() => setShowLoginModal(false)}
+            onLogin={handleLogin}
+          />
+        )}
       </div>
     );
   }
@@ -52,7 +54,7 @@ function App() {
         <Routes>
           <Route path="/saisie" element={<SaisiePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/" element={<Navigate to="/saisie" replace />} />
+          <Route path="/" element={<SaisiePage />} />
         </Routes>
     </div>
     </Router>
