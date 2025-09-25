@@ -17,7 +17,10 @@ export const getTasks = async (filters = {}) => {
   if (filters.employee_name) params.append('employee_name', filters.employee_name);
   if (filters.status) params.append('status', filters.status);
   
-  const response = await fetch(`${API_BASE_URL}/api/tasks?${params}`, {
+  const queryString = params.toString();
+  const url = queryString ? `${API_BASE_URL}/api/tasks?${queryString}` : `${API_BASE_URL}/api/tasks`;
+  
+  const response = await fetch(url, {
     headers: getHeaders() // ✅ Ajouter les headers avec l'utilisateur
   });
   return response.json();
