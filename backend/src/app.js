@@ -46,6 +46,15 @@ app.get('/', (req, res) => {
   res.send('API MyTâches opérationnelle !');
 });
 
+// Route de test pour vérifier que l'API fonctionne
+app.get('/api/test', (req, res) => {
+  res.json({
+    message: 'API MyTâches fonctionne !',
+    timestamp: new Date().toISOString(),
+    origin: req.get('Origin') || 'No Origin'
+  });
+});
+
 app.listen(port, () => {
   console.log(`🚀 Serveur backend démarré sur http://localhost:${port}`);
 });
