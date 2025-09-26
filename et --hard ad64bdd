@@ -1,0 +1,10 @@
+[33m696bf34[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix: Use Node.js fs.cpSync for cross-platform file copying and remove vercel.json for auto-detection
+[33mbd4077d[m Fix Vercel build: replace Windows xcopy with Linux cp command
+[33m577ff67[m Fix Vercel deployment: copy build to public directory for proper static serving
+[33mbc34c6f[m Fix Vercel monorepo configuration: add build scripts to root package.json
+[33mee56403[m Fix Vercel configuration: move vercel.json to root and correct build paths
+[33mf842bcc[m Fix Vercel configuration: use rewrites instead of routes for proper static file serving
+[33m2d8a50e[m Fix API retry system and request deduplication to prevent backend overload
+[33mfda7efd[m Fix API URL construction to avoid trailing question mark
+[33me9f0565[m Disable service worker to fix browser crashes and API issues
+[33md9a893f[m Fix manifest.json serving by adding json extension to static files

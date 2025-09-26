@@ -464,7 +464,7 @@ export default function TaskForm() {
 
               {/* Grille des champs avec design moderne */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 relative z-10">
-                {/* Ligne 1 : Statut - Date - Heure de début */}
+                {/* Ligne 1 : Statut - Priorité - Lieu */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
@@ -491,6 +491,55 @@ export default function TaskForm() {
                   </div>
                 </div>
                 
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    Priorité
+                  </label>
+                  <div className="relative">
+            <select
+              name="priority"
+              value={task.priority}
+              onChange={e => handleTaskChange(idx, e)}
+                      className="w-full border-2 border-red-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
+            >
+                      <option value="">Choisir</option>
+              <option value="Basse">Basse</option>
+              <option value="Normale">Normale</option>
+              <option value="Urgente">Urgente</option>
+            </select>
+                    <div className="absolute inset-0 rounded-xl border-2 border-red-300/30 pointer-events-none"></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    Lieu
+                  </label>
+                  <div className="relative">
+            <input
+              name="location"
+              value={task.location}
+              onChange={e => handleTaskChange(idx, e)}
+                      placeholder="Ex: Bureau 3"
+                      className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
+            />
+                    <div className="absolute inset-0 rounded-xl border-2 border-indigo-300/30 pointer-events-none"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ligne 2 : Date - Heure de début - Durée estimée */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 relative z-10">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                     <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
@@ -532,34 +581,6 @@ export default function TaskForm() {
                     <div className="absolute inset-0 rounded-xl border-2 border-orange-300/30 pointer-events-none"></div>
                   </div>
                 </div>
-              </div>
-
-              {/* Ligne 2 : Priorité - Durée estimée - Lieu */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 relative z-10">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    Priorité
-                  </label>
-                  <div className="relative">
-            <select
-              name="priority"
-              value={task.priority}
-              onChange={e => handleTaskChange(idx, e)}
-                      className="w-full border-2 border-red-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-            >
-                      <option value="">Choisir</option>
-              <option value="Basse">Basse</option>
-              <option value="Normale">Normale</option>
-              <option value="Urgente">Urgente</option>
-            </select>
-                    <div className="absolute inset-0 rounded-xl border-2 border-red-300/30 pointer-events-none"></div>
-                  </div>
-                </div>
                 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
@@ -579,27 +600,6 @@ export default function TaskForm() {
                       className="w-full border-2 border-teal-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
                     />
                     <div className="absolute inset-0 rounded-xl border-2 border-teal-300/30 pointer-events-none"></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                    <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    Lieu
-                  </label>
-                  <div className="relative">
-            <input
-              name="location"
-              value={task.location}
-              onChange={e => handleTaskChange(idx, e)}
-                      placeholder="Ex: Bureau 3"
-                      className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-            />
-                    <div className="absolute inset-0 rounded-xl border-2 border-indigo-300/30 pointer-events-none"></div>
                   </div>
                 </div>
           </div>
