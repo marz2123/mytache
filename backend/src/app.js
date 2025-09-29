@@ -19,7 +19,9 @@ app.use(cors({
     'https://mytache.groupemyhome.com', // ✅ Nouveau domaine frontend
     'https://mytache.vercel.app',
     'https://mytache-marzs-projects-6da00859.vercel.app',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://dashboard:1', // ✅ Ajout pour résoudre le problème CORS
+    'https://mytache.groupemyhome.com:443' // ✅ Ajout pour résoudre le problème CORS
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
