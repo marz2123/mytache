@@ -1,5 +1,5 @@
 const taskModel = require('../models/taskModel');
-const { sendMail } = require('../utils/emailGraph');
+// const { sendMail } = require('../utils/emailGraph'); // Désactivé temporairement
 const employeeModel = require('../models/employeeModel');
 
 // Ajouter une tâche
@@ -176,8 +176,8 @@ exports.addTask = async (req, res) => {
           `
         };
         
-        await sendMail(emailContent);
-        console.log(`✅ Email envoyé à ${employee.email} pour la tâche : ${req.body.task_name}`);
+        // await sendMail(emailContent); // Désactivé temporairement
+        console.log(`📧 Email désactivé - aurait été envoyé à ${employee.email} pour la tâche : ${req.body.task_name}`);
       }
       
       // Envoyer des emails aux collaborateurs si ils sont spécifiés
@@ -320,8 +320,8 @@ exports.addTask = async (req, res) => {
                 `
               };
               
-              await sendMail(collaboratorEmailContent);
-              console.log(`🤝 Email de collaboration envoyé à ${collaborator.email} pour la tâche : ${req.body.task_name}`);
+              // await sendMail(collaboratorEmailContent); // Désactivé temporairement
+              console.log(`📧 Email collaboration désactivé - aurait été envoyé à ${collaborator.email} pour la tâche : ${req.body.task_name}`);
             } else {
               console.log(`⚠️ Collaborateur "${collaboratorName}" non trouvé ou pas d'email`);
             }
