@@ -16,6 +16,7 @@ const emptyTask = (category) => ({
   date: getFrenchDate(),
   start_time: '',
   location: '',
+  locationType: 'lieu',
   estimated_duration: '',
   priority: 'Normale',
   comment: '',
@@ -34,6 +35,7 @@ export default function TaskForm() {
     date: getFrenchDate(),
     start_time: '',
     location: '',
+    locationType: 'lieu',
     estimated_duration: '',
     priority: 'Normale',
     comment: '',
@@ -523,17 +525,36 @@ export default function TaskForm() {
                         <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    Lieu
+                    Projet/Chantier/Lieu
                   </label>
-                  <div className="relative">
-            <input
-              name="location"
-              value={task.location}
-              onChange={e => handleTaskChange(idx, e)}
-                      placeholder="Ex: Bureau 3"
-                      className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
-            />
-                    <div className="absolute inset-0 rounded-xl border-2 border-indigo-300/30 pointer-events-none"></div>
+                  <div className="space-y-2">
+                    {/* Type de localisation */}
+                    <select
+                      name="locationType"
+                      value={task.locationType || 'lieu'}
+                      onChange={e => handleTaskChange(idx, e)}
+                      className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg text-sm"
+                    >
+                      <option value="lieu">📍 Lieu d'exécution</option>
+                      <option value="projet">🏗️ Projet</option>
+                      <option value="chantier">🔨 Chantier</option>
+                    </select>
+                    
+                    {/* Nom de la localisation */}
+                    <div className="relative">
+                      <input
+                        name="location"
+                        value={task.location}
+                        onChange={e => handleTaskChange(idx, e)}
+                        placeholder={
+                          task.locationType === 'projet' ? 'Ex: Projet Rénovation Bureau' :
+                          task.locationType === 'chantier' ? 'Ex: Chantier Rue de la Paix' :
+                          'Ex: Bureau 3, Atelier, Terrain...'
+                        }
+                        className="w-full border-2 border-indigo-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
+                      />
+                      <div className="absolute inset-0 rounded-xl border-2 border-indigo-300/30 pointer-events-none"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -603,6 +624,49 @@ export default function TaskForm() {
                   </div>
                 </div>
           </div>
+
+              {/* Ligne 3 : Rappel (comme Outlook) */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 relative z-10">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-md flex items-center justify-center mr-2 shadow-sm">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    Rappel
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="reminder"
+                      value={task.reminder || ''}
+                      onChange={e => handleTaskChange(idx, e)}
+                      className="w-full border-2 border-yellow-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 bg-white/70 backdrop-blur-sm shadow-md hover:shadow-lg"
+                    >
+                      <option value="">Aucun</option>
+                      <option value="0">0 min (au début)</option>
+                      <option value="1">1 min avant</option>
+                      <option value="5">5 min avant</option>
+                      <option value="10">10 min avant</option>
+                      <option value="15">15 min avant</option>
+                      <option value="30">30 min avant</option>
+                      <option value="60">1 heure avant</option>
+                      <option value="120">2 heures avant</option>
+                      <option value="180">3 heures avant</option>
+                      <option value="240">4 heures avant</option>
+                      <option value="480">8 heures avant</option>
+                      <option value="1440">1 jour avant</option>
+                      <option value="2880">2 jours avant</option>
+                      <option value="10080">1 semaine avant</option>
+                    </select>
+                    <div className="absolute inset-0 rounded-xl border-2 border-yellow-300/30 pointer-events-none"></div>
+                  </div>
+                </div>
+                
+                {/* Colonnes vides pour maintenir l'alignement */}
+                <div></div>
+                <div></div>
+              </div>
 
               {/* Description de la tâche divisée en deux colonnes */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">

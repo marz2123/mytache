@@ -84,13 +84,14 @@ async function addTask(task) {
     priority,
     comment,
     collaborator,
-    collaboration
+    collaboration,
+    reminder
   } = task;
   
   const result = await executeQuery(
-    `INSERT INTO tasks (employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-    [employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration]
+    `INSERT INTO tasks (employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration, reminder) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+    [employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration, reminder]
   );
   return result.rows[0];
 }
@@ -149,17 +150,18 @@ async function updateTask(id, updates) {
     priority,
     comment,
     collaborator,
-    collaboration
+    collaboration,
+    reminder
   } = updates;
   
   const result = await executeQuery(
     `UPDATE tasks 
      SET employee_name = $1, category = $2, task_name = $3, status = $4, date = $5, 
          start_time = $6, location = $7, estimated_duration = $8, priority = $9, comment = $10, 
-         collaborator = $11, collaboration = $12
-     WHERE id = $13 
+         collaborator = $11, collaboration = $12, reminder = $13
+     WHERE id = $14 
      RETURNING *`,
-    [employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration, id]
+    [employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration, reminder, id]
   );
   return result.rows[0];
 }

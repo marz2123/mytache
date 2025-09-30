@@ -1,4 +1,7 @@
-const API_BASE_URL = 'https://mytache-production.up.railway.app'; // ✅ Backend Railway
+// Utiliser le backend local en développement, Railway en production
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://mytache-production.up.railway.app' 
+  : 'http://localhost:5000';
 
 // Fonction helper pour obtenir les headers avec l'utilisateur connecté
 const getHeaders = () => {
