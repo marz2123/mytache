@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const { sendMail } = require('./utils/emailGraph');
+// const { sendMail } = require('./utils/emailGraph'); // Désactivé temporairement
 const taskModel = require('./models/taskModel');
 const employeeModel = require('./models/employeeModel');
 const dotenv = require('dotenv');
@@ -24,11 +24,12 @@ cron.schedule('0 9 * * *', async () => {
   for (const emp of EMPLOYEES) {
     const tasks = await taskModel.getTasks({ date: today, employee_name: emp.name });
     if (tasks.length === 0) {
-      await sendMail({
-        to: emp.email,
-        subject: 'Rappel : Merci de saisir vos tâches du jour',
-        text: `Bonjour ${emp.name},\n\nMerci de saisir vos tâches du jour sur MyTâches.`,
-      });
+      // await sendMail({ // Désactivé temporairement
+      //   to: emp.email,
+      //   subject: 'Rappel : Merci de saisir vos tâches du jour',
+      //   text: `Bonjour ${emp.name},\n\nMerci de saisir vos tâches du jour sur MyTâches.`,
+      // });
+      console.log(`📧 Email désactivé - aurait été envoyé à ${emp.email} pour rappel tâches`);
     }
   }
   console.log('Rappels envoyés à 9h');
@@ -54,11 +55,12 @@ cron.schedule('0 18 * * *', async () => {
     }
     html += '</table>';
   }
-  await sendMail({
-    to: process.env.BOSS_EMAIL,
-    subject: `Récapitulatif des tâches du ${today}`,
-    html,
-  });
+  // await sendMail({ // Désactivé temporairement
+  //   to: process.env.BOSS_EMAIL,
+  //   subject: `Récapitulatif des tâches du ${today}`,
+  //   html,
+  // });
+  console.log(`📧 Email désactivé - aurait été envoyé au boss pour récapitulatif du ${today}`);
   console.log('Récapitulatif envoyé au boss à 18h');
 });
 
@@ -123,7 +125,7 @@ cron.schedule('*/5 * * * *', async () => {
               reminderMessage = `Votre tâche commence dans ${days} jour${days > 1 ? 's' : ''} !`;
             }
             
-            await sendMail({
+            // await sendMail({ // Désactivé temporairement
               to: employee.email,
               subject: `⏰ Rappel : ${reminderMessage}`,
               html: `
@@ -285,7 +287,7 @@ cron.schedule('*/5 * * * *', async () => {
                     const collaboratorReminderKey = `${task.id || task.task_name}-${collaboratorName}-${currentDate}-collaborator`;
                     
                     if (!sentReminders.has(collaboratorReminderKey)) {
-                      await sendMail({
+                      // await sendMail({ // Désactivé temporairement
                         to: collaborator.email,
                         subject: `⏰ Rappel Collaboration : ${reminderMessage}`,
                         html: `
@@ -502,7 +504,7 @@ cron.schedule('0 8 * * *', async () => {
           </div>
         `;
         
-        await sendMail({
+        // await sendMail({ // Désactivé temporairement
           to: employee.email,
           subject: `📅 Récapitulatif de vos tâches du ${today}`,
           html
