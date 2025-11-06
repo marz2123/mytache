@@ -54,4 +54,16 @@ export const deleteTask = async (id) => {
   });
   if (!response.ok) throw new Error("Erreur lors de la suppression de la tâche");
   return response.json();
+};
+
+export const sendReminder = async (id) => {
+  const response = await fetch(`${API_BASE_URL}/api/tasks/${id}/remind`, {
+    method: 'POST',
+    headers: getHeaders() // ✅ Ajouter les headers
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Erreur lors de l'envoi du rappel");
+  }
+  return response.json();
 }; 

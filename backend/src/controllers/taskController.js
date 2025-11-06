@@ -1,5 +1,5 @@
 const taskModel = require('../models/taskModel');
-// const { sendMail } = require('../utils/emailGraph'); // Désactivé temporairement
+const { sendMail } = require('../utils/emailGraph');
 const employeeModel = require('../models/employeeModel');
 
 // Ajouter une tâche
@@ -176,8 +176,8 @@ exports.addTask = async (req, res) => {
           `
         };
         
-        // await sendMail(emailContent); // Désactivé temporairement
-        console.log(`📧 Email désactivé - aurait été envoyé à ${employee.email} pour la tâche : ${req.body.task_name}`);
+        await sendMail(emailContent);
+        console.log(`✅ Email envoyé à ${employee.email} pour la tâche : ${req.body.task_name}`);
       }
       
       // Envoyer des emails aux collaborateurs si ils sont spécifiés
@@ -320,8 +320,8 @@ exports.addTask = async (req, res) => {
                 `
               };
               
-              // await sendMail(collaboratorEmailContent); // Désactivé temporairement
-              console.log(`📧 Email collaboration désactivé - aurait été envoyé à ${collaborator.email} pour la tâche : ${req.body.task_name}`);
+              await sendMail(collaboratorEmailContent);
+              console.log(`🤝 Email de collaboration envoyé à ${collaborator.email} pour la tâche : ${req.body.task_name}`);
             } else {
               console.log(`⚠️ Collaborateur "${collaboratorName}" non trouvé ou pas d'email`);
             }
@@ -390,30 +390,101 @@ exports.getTaskById = async (req, res) => {
 // Mettre à jour une tâche
 exports.updateTask = async (req, res) => {
   try {
-    console.log('=== UPDATE TASK ===');
-    console.log('ID:', req.params.id);
-    console.log('Body:', req.body);
-    console.log('Headers:', req.headers);
+    const logger = require('../utils/logger');
+    
+    // Vérifier que l'ID est présent
+    const taskId = req.params.id;
+    if (!taskId) {
+      logger.error('❌ ID de tâche manquant dans la requête');
+      return res.status(400).json({ error: 'ID de tâche manquant' });
+    }
+    
+    logger.info(`📝 Mise à jour tâche ID: ${taskId}`);
     
     // Vérifier les permissions avant la mise à jour
     const currentUser = req.headers['x-current-user'] ? JSON.parse(req.headers['x-current-user']) : null;
-    console.log('Current user:', currentUser);
     
-    const existingTask = await taskModel.getTaskById(req.params.id);
-    console.log('Existing task:', existingTask);
+    const existingTask = await taskModel.getTaskById(taskId);
     
-    if (!existingTask) return res.status(404).json({ error: 'Tâche non trouvée' });
+    if (!existingTask) {
+      logger.warn(`⚠️ Tâche non trouvée avec ID: ${taskId}`);
+      return res.status(404).json({ error: 'Tâche non trouvée' });
+    }
     
     // Seul l'admin ou le propriétaire de la tâche peut la modifier
     if (currentUser && currentUser.role !== 'admin' && existingTask.employee_name !== currentUser.nom) {
       return res.status(403).json({ error: 'Vous ne pouvez modifier que vos propres tâches' });
     }
     
-    const updatedTask = await taskModel.updateTask(req.params.id, req.body);
-    console.log('Updated task:', updatedTask);
+    // Vérifier si le statut a changé
+    const statusChanged = req.body.status && req.body.status !== existingTask.status;
+    
+    logger.info(`📊 Données de mise à jour: ${JSON.stringify(req.body)}`);
+    
+    const updatedTask = await taskModel.updateTask(taskId, req.body);
+    
+    // Si le statut a changé, notifier l'admin (utiliser EMAIL_FROM qui est l'email qui envoie les emails)
+    const adminEmail = process.env.EMAIL_FROM || process.env.BOSS_EMAIL || 'admin@groupemyhome.com';
+    
+    if (statusChanged) {
+      logger.info(`📊 Changement de statut détecté - Envoi notification à ${adminEmail}`);
+    }
+    
+    if (statusChanged && adminEmail) {
+      try {
+        const employee = await employeeModel.getEmployeeByName(updatedTask.employee_name);
+        const userName = currentUser ? currentUser.nom : 'Système';
+        
+        const adminNotificationHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Notification de changement de statut</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; background-color: #f8fafc;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h2 style="color: #2d3748;">📊 Notification de changement de statut</h2>
+              <p>Bonjour,</p>
+              <p>Le statut d'une tâche a été modifié :</p>
+              <div style="background-color: #f7fafc; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <p><strong>Tâche :</strong> ${updatedTask.task_name}</p>
+                <p><strong>Employé :</strong> ${updatedTask.employee_name}${employee && employee.email ? ` (${employee.email})` : ''}</p>
+                <p><strong>Ancien statut :</strong> <span style="color: #e53e3e;">${existingTask.status}</span></p>
+                <p><strong>Nouveau statut :</strong> <span style="color: #38a169; font-weight: bold;">${updatedTask.status}</span></p>
+                <p><strong>Modifié par :</strong> ${userName}</p>
+                <p><strong>Date de la tâche :</strong> ${new Date(updatedTask.date).toLocaleDateString('fr-FR')}${updatedTask.start_time ? ` à ${updatedTask.start_time}` : ''}</p>
+                ${updatedTask.location ? `<p><strong>Lieu :</strong> ${updatedTask.location}</p>` : ''}
+              </div>
+              <p style="text-align: center;">
+                <a href="https://mytache.groupemyhome.com" style="background-color: #4299e1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Voir sur MyTâches</a>
+              </p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await sendMail({
+          to: adminEmail,
+          subject: `📊 Changement de statut : ${updatedTask.task_name} - ${updatedTask.employee_name}`,
+          html: adminNotificationHtml
+        });
+
+        logger.info(`✅ Notification admin envoyée pour changement de statut de la tâche : ${updatedTask.task_name} à ${adminEmail}`);
+      } catch (emailError) {
+        logger.error('❌ Erreur envoi notification admin (changement statut)', emailError);
+        logger.error(`   Détails: ${emailError.message}`);
+        if (emailError.stack) {
+          logger.error(`   Stack: ${emailError.stack.substring(0, 200)}`);
+        }
+        // Ne pas faire échouer la mise à jour si l'email échoue
+      }
+    }
+    
     res.json(updatedTask);
   } catch (err) {
-    console.error('Erreur mise à jour tâche:', err);
+    const logger = require('../utils/logger');
+    logger.error('Erreur mise à jour tâche', err);
     res.status(500).json({ error: 'Erreur lors de la mise à jour de la tâche' });
   }
 };
@@ -437,5 +508,136 @@ exports.deleteTask = async (req, res) => {
   } catch (err) {
     console.error('Erreur suppression tâche:', err);
     res.status(500).json({ error: 'Erreur lors de la suppression de la tâche' });
+  }
+};
+
+// Envoyer un rappel manuel pour une tâche
+exports.sendReminder = async (req, res) => {
+  try {
+    const logger = require('../utils/logger');
+    
+    // Récupérer la tâche
+    const task = await taskModel.getTaskById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ error: 'Tâche non trouvée' });
+    }
+
+    // Vérifier les permissions (seul admin ou propriétaire peut envoyer un rappel)
+    const currentUser = req.headers['x-current-user'] ? JSON.parse(req.headers['x-current-user']) : null;
+    if (currentUser && currentUser.role !== 'admin' && task.employee_name !== currentUser.nom) {
+      return res.status(403).json({ error: 'Vous ne pouvez envoyer un rappel que pour vos propres tâches' });
+    }
+
+    // Récupérer l'employé assigné à la tâche
+    const employee = await employeeModel.getEmployeeByName(task.employee_name);
+    if (!employee || !employee.email) {
+      return res.status(400).json({ error: 'Employé non trouvé ou email manquant' });
+    }
+
+    // Créer le message de rappel
+    const reminderMessage = task.start_time 
+      ? `Votre tâche "${task.task_name}" est prévue le ${new Date(task.date).toLocaleDateString('fr-FR')} à ${task.start_time}`
+      : `Rappel pour votre tâche "${task.task_name}" prévue le ${new Date(task.date).toLocaleDateString('fr-FR')}`;
+
+    // Créer l'email HTML
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Rappel de Tâche</title>
+      </head>
+      <body style="font-family: Arial, sans-serif; background-color: #f8fafc;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #2d3748;">⏰ Rappel de Tâche</h2>
+          <p>Bonjour ${employee.nom},</p>
+          <p style="font-size: 18px; color: #e53e3e; font-weight: bold;">${reminderMessage}</p>
+          <div style="background-color: #f7fafc; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <h3>Détails de la tâche :</h3>
+            <p><strong>${task.task_name}</strong></p>
+            <p>Date : ${new Date(task.date).toLocaleDateString('fr-FR')}${task.start_time ? ` à ${task.start_time}` : ''}</p>
+            ${task.location ? `<p>Lieu : ${task.location}</p>` : ''}
+            ${task.priority ? `<p>Priorité : ${task.priority}</p>` : ''}
+            ${task.status ? `<p>Statut : ${task.status}</p>` : ''}
+          </div>
+          <p style="text-align: center;">
+            <a href="https://mytache.groupemyhome.com" style="background-color: #4299e1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Voir sur MyTâches</a>
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Envoyer l'email à l'employé
+    await sendMail({
+      to: employee.email,
+      subject: `⏰ Rappel : ${task.task_name}`,
+      html: emailHtml
+    });
+
+    logger.info(`✅ Rappel manuel envoyé à ${employee.email} pour la tâche : ${task.task_name}`);
+
+    // Notifier l'admin (utiliser EMAIL_FROM qui est l'email qui envoie les emails)
+    const adminEmail = process.env.EMAIL_FROM || process.env.BOSS_EMAIL || 'admin@groupemyhome.com';
+    
+    if (adminEmail) {
+      logger.info(`📧 Envoi notification admin à ${adminEmail} pour rappel manuel`);
+      try {
+        const adminUser = req.headers['x-current-user'] ? JSON.parse(req.headers['x-current-user']) : null;
+        const userName = adminUser ? adminUser.nom : 'Système';
+        
+        const adminNotificationHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Notification de rappel envoyé</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; background-color: #f8fafc;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h2 style="color: #2d3748;">📧 Notification de rappel envoyé</h2>
+              <p>Bonjour,</p>
+              <p>Un rappel manuel a été envoyé pour une tâche :</p>
+              <div style="background-color: #f7fafc; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                <p><strong>Tâche :</strong> ${task.task_name}</p>
+                <p><strong>Employé :</strong> ${task.employee_name} (${employee.email})</p>
+                <p><strong>Date de la tâche :</strong> ${new Date(task.date).toLocaleDateString('fr-FR')}${task.start_time ? ` à ${task.start_time}` : ''}</p>
+                ${task.location ? `<p><strong>Lieu :</strong> ${task.location}</p>` : ''}
+                ${task.priority ? `<p><strong>Priorité :</strong> ${task.priority}</p>` : ''}
+                <p><strong>Rappel envoyé par :</strong> ${userName}</p>
+              </div>
+              <p style="text-align: center;">
+                <a href="https://mytache.groupemyhome.com" style="background-color: #4299e1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Voir sur MyTâches</a>
+              </p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await sendMail({
+          to: adminEmail,
+          subject: `📧 Rappel envoyé : ${task.task_name} - ${task.employee_name}`,
+          html: adminNotificationHtml
+        });
+
+        logger.info(`✅ Notification admin envoyée pour rappel de la tâche : ${task.task_name} à ${adminEmail}`);
+      } catch (adminEmailError) {
+        logger.error('❌ Erreur envoi notification admin (rappel)', adminEmailError);
+        logger.error(`   Détails: ${adminEmailError.message}`);
+        if (adminEmailError.stack) {
+          logger.error(`   Stack: ${adminEmailError.stack.substring(0, 200)}`);
+        }
+        // Ne pas faire échouer l'envoi du rappel si la notification admin échoue
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `Rappel envoyé avec succès à ${employee.email}` 
+    });
+  } catch (err) {
+    const logger = require('../utils/logger');
+    logger.error('Erreur envoi rappel manuel', err);
+    res.status(500).json({ error: 'Erreur lors de l\'envoi du rappel' });
   }
 }; 

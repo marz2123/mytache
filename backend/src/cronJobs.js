@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { sendMail } = require('./utils/emailGraph');
 const taskModel = require('./models/taskModel');
 const employeeModel = require('./models/employeeModel');
+const logger = require('./utils/logger');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -16,9 +17,9 @@ async function loadEmployees() {
   try {
     const employees = await employeeModel.getEmployees();
     EMPLOYEES = employees.filter(emp => emp.actif);
-    console.log(`✅ ${EMPLOYEES.length} employés chargés pour les rappels`);
+    logger.info(`✅ ${EMPLOYEES.length} employés chargés pour les rappels`);
   } catch (error) {
-    console.error('❌ Erreur chargement employés:', error);
+    logger.error('❌ Erreur chargement employés', error);
     EMPLOYEES = [];
   }
 }
@@ -28,37 +29,37 @@ loadEmployees();
 
 // 1. Rappel quotidien à 9h pour saisir les tâches
 cron.schedule('0 9 * * *', async () => {
-  console.log('🕘 Début rappel quotidien 9h');
+  logger.info('🕘 Début rappel quotidien 9h');
   const today = new Date().toISOString().slice(0, 10);
   
   for (const emp of EMPLOYEES) {
     try {
       const tasks = await taskModel.getTasks({ date: today, employee_name: emp.nom });
-      if (tasks.length === 0) {
-        await sendMail({
-          to: emp.email,
-          subject: 'Rappel : Merci de saisir vos tâches du jour',
+    if (tasks.length === 0) {
+      await sendMail({
+        to: emp.email,
+        subject: 'Rappel : Merci de saisir vos tâches du jour',
           text: `Bonjour ${emp.nom},\n\nMerci de saisir vos tâches du jour sur MyTâches.\n\nCordialement,\nL'équipe MyTâches`
-        });
-        console.log(`✅ Email de rappel envoyé à ${emp.email}`);
+      });
+        logger.info(`✅ Email de rappel envoyé à ${emp.email}`);
       }
     } catch (error) {
-      console.error(`❌ Erreur rappel ${emp.nom}:`, error);
+      logger.error(`❌ Erreur rappel ${emp.nom}`, error);
     }
   }
-  console.log('✅ Rappels quotidiens terminés');
+  logger.info('✅ Rappels quotidiens terminés');
 });
 
 // 2. Récapitulatif quotidien à 18h pour le boss
 cron.schedule('0 18 * * *', async () => {
-  console.log('🕕 Début récapitulatif quotidien 18h');
+  logger.info('🕕 Début récapitulatif quotidien 18h');
   const today = new Date().toISOString().slice(0, 10);
   
   try {
     const allTasks = await taskModel.getTasks({ date: today });
     
     if (allTasks.length === 0) {
-      console.log('📝 Aucune tâche aujourd\'hui');
+      logger.info('📝 Aucune tâche aujourd\'hui');
       return;
     }
 
@@ -106,18 +107,18 @@ cron.schedule('0 18 * * *', async () => {
     `;
 
     if (process.env.BOSS_EMAIL) {
-      await sendMail({
-        to: process.env.BOSS_EMAIL,
-        subject: `Récapitulatif des tâches du ${today}`,
+  await sendMail({
+    to: process.env.BOSS_EMAIL,
+    subject: `Récapitulatif des tâches du ${today}`,
         html: html
       });
-      console.log(`✅ Récapitulatif envoyé au boss (${process.env.BOSS_EMAIL}) pour le ${today}`);
+      logger.info(`✅ Récapitulatif envoyé au boss (${process.env.BOSS_EMAIL}) pour le ${today}`);
     } else {
-      console.warn('⚠️ BOSS_EMAIL non configuré. Le récapitulatif quotidien ne sera pas envoyé.');
+      logger.warn('⚠️ BOSS_EMAIL non configuré. Le récapitulatif quotidien ne sera pas envoyé.');
     }
     
   } catch (error) {
-    console.error('❌ Erreur récapitulatif:', error);
+    logger.error('❌ Erreur récapitulatif', error);
   }
 });
 
@@ -207,7 +208,7 @@ cron.schedule('*/5 * * * *', async () => {
             `
           });
           
-          console.log(`✅ Rappel envoyé à ${employee.email} pour la tâche : ${task.task_name}`);
+          logger.info(`✅ Rappel envoyé à ${employee.email} pour la tâche : ${task.task_name}`);
           
           // Envoyer des rappels aux collaborateurs si ils sont spécifiés
           if (task.collaborator && task.collaborator.trim() !== '') {
@@ -253,35 +254,35 @@ cron.schedule('*/5 * * * *', async () => {
                     });
                     
                     sentReminders.add(collaboratorReminderKey);
-                    console.log(`🤝 Rappel collaboration envoyé à ${collaborator.email} pour la tâche : ${task.task_name}`);
+                    logger.info(`🤝 Rappel collaboration envoyé à ${collaborator.email} pour la tâche : ${task.task_name}`);
                   }
                 } else {
-                  console.log(`⚠️ Collaborateur "${collaboratorName}" non trouvé ou pas d'email pour le rappel`);
+                  logger.warn(`⚠️ Collaborateur "${collaboratorName}" non trouvé ou pas d'email pour le rappel`);
                 }
               } catch (collaboratorReminderError) {
-                console.error(`❌ Erreur rappel collaborateur "${collaboratorName}":`, collaboratorReminderError);
+                logger.error(`❌ Erreur rappel collaborateur "${collaboratorName}"`, collaboratorReminderError);
               }
             }
           }
           
           // Marquer comme envoyé pour éviter les doublons
           sentReminders.add(reminderKey);
-          console.log(`📝 Rappel marqué comme envoyé: ${reminderKey}`);
+          logger.info(`📝 Rappel marqué comme envoyé: ${reminderKey}`);
         }
       } catch (taskError) {
-        console.error(`❌ Erreur traitement tâche ${task.id}:`, taskError);
+        logger.error(`❌ Erreur traitement tâche ${task.id}`, taskError);
       }
     }
   } catch (error) {
-    console.error('❌ Erreur système de rappels:', error);
+    logger.error('❌ Erreur système de rappels', error);
   }
 });
 
 // 4. Nettoyage périodique des rappels envoyés (toutes les heures)
 cron.schedule('0 * * * *', () => {
-  console.log(`🧹 Nettoyage des rappels - ${sentReminders.size} rappels en mémoire`);
+  logger.info(`🧹 Nettoyage des rappels - ${sentReminders.size} rappels en mémoire`);
 });
 
-console.log('📧 Système de rappels email initialisé');
-console.log('⏰ Rappels quotidiens : 9h (saisie tâches) et 18h (récapitulatif boss)');
-console.log('🔔 Rappels tâches : toutes les 5 minutes selon timing choisi');
+logger.info('📧 Système de rappels email initialisé');
+logger.info('⏰ Rappels quotidiens : 9h (saisie tâches) et 18h (récapitulatif boss)');
+logger.info('🔔 Rappels tâches : toutes les 5 minutes selon timing choisi');

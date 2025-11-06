@@ -136,33 +136,40 @@ async function getTaskById(id) {
   return result.rows[0];
 }
 
-// Mettre à jour une tâche
+// Mettre à jour une tâche (mise à jour partielle - seulement les champs fournis)
 async function updateTask(id, updates) {
-  const {
-    employee_name,
-    category,
-    task_name,
-    status,
-    date,
-    start_time,
-    location,
-    estimated_duration,
-    priority,
-    comment,
-    collaborator,
-    collaboration,
-    reminder
-  } = updates;
+  // Construire dynamiquement la requête SQL pour ne mettre à jour que les champs fournis
+  const fields = [];
+  const values = [];
+  let paramIndex = 1;
   
-  const result = await executeQuery(
-    `UPDATE tasks 
-     SET employee_name = $1, category = $2, task_name = $3, status = $4, date = $5, 
-         start_time = $6, location = $7, estimated_duration = $8, priority = $9, comment = $10, 
-         collaborator = $11, collaboration = $12, reminder = $13
-     WHERE id = $14 
-     RETURNING *`,
-    [employee_name, category, task_name, status, date, start_time, location, estimated_duration, priority, comment, collaborator, collaboration, reminder, id]
-  );
+  // Liste des champs possibles
+  const allowedFields = [
+    'employee_name', 'category', 'task_name', 'status', 'date', 
+    'start_time', 'location', 'estimated_duration', 'priority', 
+    'comment', 'collaborator', 'collaboration', 'reminder'
+  ];
+  
+  // Construire la clause SET seulement pour les champs fournis
+  for (const field of allowedFields) {
+    if (updates.hasOwnProperty(field) && updates[field] !== undefined && updates[field] !== null) {
+      fields.push(`${field} = $${paramIndex}`);
+      values.push(updates[field]);
+      paramIndex++;
+    }
+  }
+  
+  // Si aucun champ à mettre à jour, retourner la tâche existante
+  if (fields.length === 0) {
+    console.log('⚠️ Aucun champ à mettre à jour, retour de la tâche existante');
+    return await getTaskById(id);
+  }
+  
+  // Ajouter l'ID à la fin pour la clause WHERE
+  values.push(id);
+  
+  const query = `UPDATE tasks SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`;
+  const result = await executeQuery(query, values);
   return result.rows[0];
 }
 
