@@ -58,19 +58,35 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Configuration CORS pour autoriser le nouveau domaine
-app.use(cors({
-  origin: [
-    'https://mytache.groupemyhome.com', // ✅ Nouveau domaine frontend
-    'https://mytache.vercel.app',
-    'https://mytache-marzs-projects-6da00859.vercel.app',
-    'http://localhost:3000',
-    'https://dashboard:1', // ✅ Ajout pour résoudre le problème CORS
-    'https://mytache.groupemyhome.com:443' // ✅ Ajout pour résoudre le problème CORS
-  ],
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Liste des origines autorisées
+    const allowedOrigins = [
+      'https://mytache.groupemyhome.com',
+      'https://mytache.vercel.app',
+      'https://mytache-marzs-projects-6da00859.vercel.app',
+      'http://localhost:3000',
+      'https://dashboard:1',
+      'https://mytache.groupemyhome.com:443'
+    ];
+    
+    // Autoriser les requêtes sans origine (Postman, curl, etc.) en développement
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      logger.warn(`⚠️ CORS bloqué pour l'origine: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-current-user']
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-current-user', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
