@@ -27,8 +27,18 @@ async function loadEmployees() {
 // Charger les employés au démarrage
 loadEmployees();
 
+const disableMorningReminder = process.env.DISABLE_MORNING_REMINDER === 'true';
+if (disableMorningReminder) {
+  logger.warn('⏸️ Rappel quotidien 9h désactivé via DISABLE_MORNING_REMINDER');
+}
+
 // 1. Rappel quotidien à 9h pour saisir les tâches
 cron.schedule('0 9 * * *', async () => {
+  if (disableMorningReminder) {
+    logger.info('⏸️ Rappel quotidien 9h ignoré (désactivé)');
+    return;
+  }
+
   logger.info('🕘 Début rappel quotidien 9h');
   const today = new Date().toISOString().slice(0, 10);
   
