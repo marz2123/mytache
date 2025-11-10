@@ -1,38 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { getEmployees } from '../api/employees';
+import React, { useState } from 'react';
 import { login } from '../api/auth';
 
 export default function LoginModal({ isOpen, onClose, onLogin }) {
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Charger la liste des utilisateurs actifs
-  useEffect(() => {
-    const loadEmployees = async () => {
-      try {
-        console.log('🔍 Chargement des employés...');
-        const data = await getEmployees();
-        console.log('✅ Employés chargés:', data);
-        setEmployees(data); // Supprimer le filtre actif
-      } catch (err) {
-        console.error('❌ Erreur lors du chargement des utilisateurs:', err);
-      }
-    };
-    
-    // Charger les employés au démarrage, pas seulement quand la modal s'ouvre
-    loadEmployees();
-  }, []); // Dépendance vide pour charger une seule fois
-
   // Gérer la connexion
   const handleLogin = async (e) => {
     e.preventDefault();
     
-    if (!selectedEmployee || !password) {
+    if (!email || !password) {
       setError('Veuillez saisir votre email et mot de passe');
       return;
     }
@@ -41,12 +21,12 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
     setError('');
 
     try {
-      console.log('🔍 Tentative de connexion pour:', selectedEmployee);
-      console.log('📧 Email envoyé:', selectedEmployee);
+      console.log('🔍 Tentative de connexion pour:', email);
+      console.log('📧 Email envoyé:', email);
       console.log(' Mot de passe envoyé:', password);
       
       const response = await login({
-        email: selectedEmployee, // ✅ Envoyer email au lieu de nom
+        email,
         password: password
       });
       
@@ -70,7 +50,7 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
 
   // Réinitialiser le formulaire
   const handleClose = () => {
-    setSelectedEmployee('');
+    setEmail('');
     setPassword('');
     setShowPassword(false);
     setError('');
@@ -105,8 +85,8 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
             </label>
             <input
               type="email"
-              value={selectedEmployee}
-              onChange={(e) => setSelectedEmployee(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Entrez votre email"
               className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               required
@@ -159,13 +139,14 @@ export default function LoginModal({ isOpen, onClose, onLogin }) {
           <div className="flex space-x-4 pt-4">
             <button
               type="submit"
-              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105"
+              disabled={loading}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Se connecter
+              {loading ? 'Connexion...' : 'Se connecter'}
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200"
             >
               Annuler
