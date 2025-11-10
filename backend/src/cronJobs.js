@@ -27,38 +27,40 @@ async function loadEmployees() {
 // Charger les employés au démarrage
 loadEmployees();
 
-const disableMorningReminder = process.env.DISABLE_MORNING_REMINDER === 'true';
+const disableMorningReminder = process.env.DISABLE_MORNING_REMINDER !== 'false';
 if (disableMorningReminder) {
-  logger.warn('⏸️ Rappel quotidien 9h désactivé via DISABLE_MORNING_REMINDER');
+  const reason = process.env.DISABLE_MORNING_REMINDER
+    ? `valeur "${process.env.DISABLE_MORNING_REMINDER}"`
+    : 'valeur par défaut';
+  logger.warn(`⏸️ Rappel quotidien 9h désactivé (${reason})`);
 }
 
 // 1. Rappel quotidien à 9h pour saisir les tâches
-cron.schedule('0 9 * * *', async () => {
-  if (disableMorningReminder) {
-    logger.info('⏸️ Rappel quotidien 9h ignoré (désactivé)');
-    return;
-  }
-
-  logger.info('🕘 Début rappel quotidien 9h');
-  const today = new Date().toISOString().slice(0, 10);
-  
-  for (const emp of EMPLOYEES) {
-    try {
-      const tasks = await taskModel.getTasks({ date: today, employee_name: emp.nom });
-    if (tasks.length === 0) {
-      await sendMail({
-        to: emp.email,
-        subject: 'Rappel : Merci de saisir vos tâches du jour',
-          text: `Bonjour ${emp.nom},\n\nMerci de saisir vos tâches du jour sur MyTâches.\n\nCordialement,\nL'équipe MyTâches`
-      });
-        logger.info(`✅ Email de rappel envoyé à ${emp.email}`);
+if (!disableMorningReminder) {
+  cron.schedule('0 9 * * *', async () => {
+    logger.info('🕘 Début rappel quotidien 9h');
+    const today = new Date().toISOString().slice(0, 10);
+    
+    for (const emp of EMPLOYEES) {
+      try {
+        const tasks = await taskModel.getTasks({ date: today, employee_name: emp.nom });
+        if (tasks.length === 0) {
+          await sendMail({
+            to: emp.email,
+            subject: 'Rappel : Merci de saisir vos tâches du jour',
+            text: `Bonjour ${emp.nom},\n\nMerci de saisir vos tâches du jour sur MyTâches.\n\nCordialement,\nL'équipe MyTâches`
+          });
+          logger.info(`✅ Email de rappel envoyé à ${emp.email}`);
+        }
+      } catch (error) {
+        logger.error(`❌ Erreur rappel ${emp.nom}`, error);
       }
-    } catch (error) {
-      logger.error(`❌ Erreur rappel ${emp.nom}`, error);
     }
-  }
-  logger.info('✅ Rappels quotidiens terminés');
-});
+    logger.info('✅ Rappels quotidiens terminés');
+  });
+} else {
+  logger.info('⏹️ Cron rappel quotidien 9h non démarré (fonctionnalité désactivée)');
+}
 
 // 2. Récapitulatif quotidien à 18h pour le boss
 cron.schedule('0 18 * * *', async () => {
